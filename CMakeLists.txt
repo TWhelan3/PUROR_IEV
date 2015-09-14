@@ -54,7 +54,7 @@ set(SOURCES "${SOURCES} ${ISMRMRD_REAL_INCLUDE}/ismrmrd.h")
 
 LINK_DIRECTORIES(${GADGETRON_LIB_DIR} )
 
-ADD_LIBRARY(gadgetron_PUROR SHARED AccGadget.cpp ContrastGadget.cpp Mask.cpp UnwrapGadget.cpp GetMaskGadget.cpp PUROR.cpp Unwrap3DGadget.cpp HPFGadget.cpp)
+ADD_LIBRARY(gadgetron_PUROR SHARED AccGadget.cpp ContrastGadget.cpp Mask.cpp UnwrapGadget.cpp GetMaskGadget.cpp PUROR.cpp Unwrap3DGadget.cpp HPFGadget.cpp ExtractMagGadget.cpp)
 
 TARGET_LINK_LIBRARIES(gadgetron_PUROR #${MPI_LIBRARIES}
                       optimized ${ACE_LIBRARIES} 
@@ -62,7 +62,7 @@ TARGET_LINK_LIBRARIES(gadgetron_PUROR #${MPI_LIBRARIES}
 			    gadgetron_toolbox_cpufft)
 
 
-INSTALL (FILES PUROR.h Mask.h GetMaskGadget.h ContrastGadget.h UnwrapGadget.h AccGadget.h Unwrap3DGadget.h HPFGadget.h DESTINATION include)
+INSTALL (FILES PUROR.h Mask.h GetMaskGadget.h ContrastGadget.h UnwrapGadget.h AccGadget.h Unwrap3DGadget.h HPFGadget.h ExtractMagGadget.h DESTINATION include)
 
 INSTALL(TARGETS gadgetron_PUROR DESTINATION lib)
 

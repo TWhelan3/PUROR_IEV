@@ -5,7 +5,6 @@
 #include <cmath>
 #include "Mask.h"
 #include <vector>
-//#include "GadgetMRIHeaders.h"
 #include "gadgetron_PUROR_export.h"
 #include <math.h>
 #include "Gadget.h"

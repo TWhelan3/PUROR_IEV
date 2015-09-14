@@ -76,9 +76,12 @@ int AccGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 				int end = (omp_get_thread_num()+1)/omp_get_num_threads()*xres*yres*cres;
 				for(int i =start; i <end; i++)
 				{
+					/////////
 					for(int j = 0; j < numEchos; j++)
 						sample[j]=cptr[i+j*xres*yres*cres];     //assuming all(6-10 at at time) pages can be held in memory, this isn't terrible
+					
 					weights[i]=stdev(sample, numEchos);		//find standard deviation between echoes
+					/////				
 				}
 				delete[] sample;
 			}
