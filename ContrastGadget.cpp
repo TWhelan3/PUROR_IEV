@@ -64,7 +64,9 @@ int ContrastGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 	
 		h1->cont(outimage);
 		h1->getObjectPtr()->image_series_index=numEchos;//what should this be
-		h1->getObjectPtr()->image_index = (h1->getObjectPtr()->image_index-1) % numSlices+1;//v.s.
+		//h1->getObjectPtr()->image_index = (h1->getObjectPtr()->image_index-1) % numSlices;//+1;//v.s.
+		h1->getObjectPtr()->image_index = (h1->getObjectPtr()->image_index);// % numSlices;//+1;//v.s.
+		h1->getObjectPtr()->set =10;
 		
 
 		if (this->next()->putq(h1) == -1) {
