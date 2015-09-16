@@ -15,8 +15,6 @@ int UnwrapGadget::process_config(ACE_Message_Block* mb)
 }
 int UnwrapGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 {
-	//Gets the header, complex data, maskdata
-	//Passes on the header, unwrapped x
 	static int myid = 0;
 	
 	
@@ -39,28 +37,18 @@ int UnwrapGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 	hoNDArray< float > *phase_x_block = cm2->getObjectPtr();	
 	hoNDArray< float > *phase_y_block = new hoNDArray< float >;
 
-
-	//std::chrono::high_resolution_clock::time_point t1;
-	//std::chrono::high_resolution_clock::time_point t2;
-	//int duration;
-	
 	bool fullsignal;
 
 
 	fullsignal=0;
 
-	//GINFO("m1 count %d m2 count %d support mask count %d\n",m1->reference_count(), m2->reference_count(), supportmasks->reference_count());
 	//Copy the header
 	*cm1->getObjectPtr() = *m1->getObjectPtr();//correct way to copy? based on extract gadget, since does a similar task
 	cm1->getObjectPtr()->data_type = ISMRMRD::ISMRMRD_FLOAT;//GADGET_IMAGE_REAL_FLOAT;
 	cm1->getObjectPtr()->image_type = ISMRMRD::ISMRMRD_IMTYPE_PHASE;
 
 	boost::shared_ptr< std::vector<size_t> > dims = m2->getObjectPtr()->get_dimensions();
-		//////
 
-	//if(myid%106==0)
-		//t1 = std::chrono::high_resolution_clock::now();
-		//////
 	try{phase_x_block->create(dims.get());}
 	catch (std::runtime_error &err){
 		GEXCEPTION(err,"Unable to create itohx in Unwrap Gadget");
@@ -157,14 +145,10 @@ int UnwrapGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 		//Find highest quality strips in the two images
 		calc_quality_y(phase_x, mask, quality_y,xy_start_dw,xy_start_up);
 		calc_quality_x(phase_y, mask, quality_x,xy_start_L,xy_start_R);
-		//if(myid==0)
-		//for (int i = 0; i < xres; i++) 
-		//std::cout<<quality_x[i]<<" ";
 
 		if ((xy_start_R - xy_start_L)>=(xy_start_up - xy_start_dw))//need to change to a ratio if want to use a bias
 		{	
 			//Unwrapped columns have greater quality
-
 			
 			center_y(phase_y, phase_x, t_mask,xy_start_L,xy_start_R);//Align unwrapped rows with best part columns
 			
@@ -201,45 +185,31 @@ int UnwrapGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 
 	
 	}
-	//GINFO("m1 count %d m2 count %d support mask count %d\n",m1->reference_count(), m2->reference_count(), supportmasks->reference_count());
+	
 
 	delete phase_y_block;
 	//need to deal with meta
 	cm1->cont(cm2);
-	//GadgetContainerMessage<hoNDArray<int>> *supportmasks_dup = supportmasks->duplicate();
-	//GINFO("m1 count %d m2 count %d support mask count %d mask count %d\n",cm1->reference_count(), cm2->reference_count(), cm2->cont()->reference_count(),masks->reference_count());
+
 	cm2->cont(supportmasks);
-	//supportmasks->duplicate();
-	//meta->duplicate();
-	//masks->duplicate();
+
 	if(fullsignal)
 	{
 		supportmasks->getObjectPtr()->get_data_ptr()[0]-=2;
 	}
 
-	//GINFO("m1 count %d m2 count %d support mask count %d mask count %d\n",cm1->reference_count(), cm2->reference_count(), supportmasks->reference_count(),masks->reference_count());
 	if (this->next()->putq(cm1) == -1) {
 		cm1->release();
 		GDEBUG("Unable to put images on next gadgets queue\n");
 		return GADGET_FAIL;
 	}
-		/*if(myid%106==0)
-		{
-		t2 = std::chrono::high_resolution_clock::now();
-		 duration= std::chrono::duration_cast<std::chrono::microseconds>( t2 - t1 ).count();
-		//GINFO("~Total for %d: %d\n",myid, duration);
-		//GDEBUG("%d Unwrapped Queue Length  %d HWM\n", this->msg_queue()->message_count(), this->msg_queue()->high_water_mark());
-		}*/
 	
 	if(myid%24==0)//debugging value, shows approximately how long to do four sets of six echos
 	GINFO("Unwrapped %d \n",cm1->getObjectPtr()->image_index);
 	++myid;
 	m2->cont(NULL);//necessary so masks don't get deleted and stay connected. Release removes links further down chain.
 	m1->release(); 
-	//GINFO("m1 count %d m2 count %d support mask count %d\n",m1->reference_count(), m2->reference_count(), supportmasks->reference_count());
-
-
-
+	
 	return GADGET_OK;
 }
 
@@ -300,11 +270,8 @@ void UnwrapGadget::unwrap_columns(float* toUnwrap, float* output)
 			for(j=0; j<yres; j++)
 				phase_tmp[j]=toUnwrap[i*yres+j];
 			
-			//memcpy(phase_tmp.data(), toUnwrap+i*yres, yres*sizeof(float));
-	
 			unwrap(phase_tmp.data(),yres);
 
-			//memcpy(output+i*yres, phase_tmp.data(), yres*sizeof(float));
 			for(j=0; j<yres; j++)
 				output[i*yres+j]=phase_tmp[j];
 		
@@ -839,7 +806,6 @@ void UnwrapGadget::calc_quality_y(float* phase_x, int *mask, std::vector<float> 
 			len_dw=0; 
 			for(ii=0;ii<xres; ii++)
 			{
-				//if(t_mask[(row_index+1)*xres+ii] && t_mask[row_index*xres+ii])
 				if(mask[row_index+1+yres*ii] && mask[row_index+yres*ii])
 					pointsToUse.push_back(ii);
 			}
@@ -848,15 +814,12 @@ void UnwrapGadget::calc_quality_y(float* phase_x, int *mask, std::vector<float> 
 			{
 				if(fabs(phase_x[yres*pointsToUse[ii]] -  phase_x[yres*pointsToUse[ii]+1])>PI);
 				len_dw++;
-				//std::cout<<pointsToUse[ii]<<" ";
 			}
-			//std::cout<<pointsToUse.size()<<" "<<len_dw<<" "<<pointsToUse.size()<<"     ";
-			//std::cout<<(pointsToUse.size()-len_dw)/(pointsToUse.size())<<"     ";
+
 			if(!pointsToUse.empty())				
 				quality_y[row_index]=(float)(pointsToUse.size()-len_dw)/((float)pointsToUse.size());
 			else
 				quality_y[row_index]=-1;
-			//std::cout<<quality_y[row_index]<<" ";
 		}
 		if(row_index==(yres-1))//special case
 		{
@@ -864,8 +827,7 @@ void UnwrapGadget::calc_quality_y(float* phase_x, int *mask, std::vector<float> 
 			{
 				if(mask[row_index-1+yres*ii] && mask[row_index+yres*ii])
 					pointsToUse.push_back(ii);
-				//if(t_mask[(row_index-1)*xres+ii] && t_mask[row_index*xres+ii])
-					
+								
 			}
 			for(ii=0; ii<pointsToUse.size(); ii++)
 			{
@@ -1100,7 +1062,7 @@ void  UnwrapGadget::center_x(float* phase_x, float* phase_y, int* mask, int xy_s
 				diffmean=(PI*2)*round(diffmean/(PI*2));
 				for(ii=0;ii<index_l.size(); ii++)
 					phase_y[index_l[ii]+yres*col_index]+=diffmean;
-			}		//
+			}		
 		}
 
 		index_l.clear();

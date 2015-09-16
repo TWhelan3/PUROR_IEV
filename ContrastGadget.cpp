@@ -13,7 +13,6 @@ int ContrastGadget::process_config(ACE_Message_Block* mb)
 	ISMRMRD::IsmrmrdHeader hdr;
         ISMRMRD::deserialize(mb->rd_ptr(),hdr);
 	numEchos=hdr.encoding[0].encodingLimits.contrast().maximum +1; //number of echos is one more than highest numbers (0-based)
-	//this->msg_queue()->high_water_mark(128);
 	numSlices=hdr.encoding[0].reconSpace.matrixSize.z; //number of slices (will this always work?)
 	return GADGET_OK;
 }

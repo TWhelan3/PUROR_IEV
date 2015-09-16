@@ -13,7 +13,7 @@ int IEVChannelSumGadget::process_config(ACE_Message_Block* mb)
 	ISMRMRD::IsmrmrdHeader hdr;
         ISMRMRD::deserialize(mb->rd_ptr(),hdr);
 	numEchos=hdr.encoding[0].encodingLimits.contrast().maximum +1; //number of echos is one more than highest numbers (0-based)
-	//this->msg_queue()->high_water_mark(128);
+
 	echoTimes=hdr.sequenceParameters.get().TE.get();//should be doing checks, structures are optional
 	num_slices=hdr.encoding[0].reconSpace.matrixSize.z; //number of slices (will this always work?)
 	return GADGET_OK;
@@ -21,8 +21,6 @@ int IEVChannelSumGadget::process_config(ACE_Message_Block* mb)
 int IEVChannelSumGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 {
 	GadgetContainerMessage<hoNDArray< float > > *unwrapped_ptr =     AsContainerMessage<hoNDArray<float>>(m1->cont());
-	
-	//I think there should be a subtract first echo step involved that I am missing?
 	static int c=0;	
 	int e;
 	int yres = unwrapped_ptr->getObjectPtr()->get_size(0);
@@ -67,7 +65,7 @@ int IEVChannelSumGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* 
 		float** channel_weights= new float* [cres];
 		float* to_normalize = new float[xres*yres];
 		int ch,i;
-		//GDEBUG("%d Saving Queue Length  %d My Queue Length\n", this->next()->msg_queue()->message_count(), this->msg_queue()->message_count());
+		
 		if(iev.value()==1)
 		{
 			#pragma omp parallel //expanded parallel --- to allow sample to be allocated once
@@ -94,7 +92,7 @@ int IEVChannelSumGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* 
 		
 			
 				channel_weights[ch]=&weights[ch*xres*yres];
-				//medianFilter(channel_weights[ch],xres,yres);
+				medianFilter(channel_weights[ch],xres,yres);
 				for (int i = 0; i < xres*yres; i++)
 				{
 				  channel_weights[ch][i]=1/(channel_weights[ch][i]+FLT_MIN);		//weight as inverse, 

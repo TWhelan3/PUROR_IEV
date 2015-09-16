@@ -15,15 +15,12 @@ int Unwrap3DGadget::process_config(ACE_Message_Block* mb)
 
 	ISMRMRD::IsmrmrdHeader hdr;
         ISMRMRD::deserialize(mb->rd_ptr(),hdr);
-	//num_echos=6; num_slices=32; num_ch=32;
 	num_echos=hdr.encoding[0].encodingLimits.contrast().maximum +1; //number of echos is one more than highest numbers (0-based)
 	num_slices=hdr.encoding[0].reconSpace.matrixSize.z; //number of slices (will this always work?)
 	//This is an optional part of the header and not sure if it will always be appropriate. # channels in acquisition may not be # channels in image gadget receives if they are already combined
 	//for now leacing cres (actual image channels) separate
 	num_ch=hdr.acquisitionSystemInformation.get().receiverChannels();
 
-
-	//this->msg_queue()->high_water_mark(128);//This helps with memory. It's not a hard limit though. 
 	ordering.resize(num_echos*num_slices);
 	slice_mean.resize(num_echos);
 
@@ -102,14 +99,6 @@ int Unwrap3DGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 	ordering[header->image_index-1]=myplace++;
 	temp_storage->appendImage("here", image);
 
-
-	/*if (this->next()->putq(m1) == -1) {
-	m1->release();
-	GDEBUG("Unable to put images on next gadgets queue\n");
-	return GADGET_FAIL;
-	}*/
-
-
 	m1->release();
 	
 
@@ -125,7 +114,7 @@ int Unwrap3DGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 		t1 = std::chrono::high_resolution_clock::now();
 		//parallelize this
 		//for outlerloop is echos or channels better?
-		for(e=0; e<num_echos; e++)
+		/*for(e=0; e<num_echos; e++)
 		for(ch=0;ch<cres;ch++)
 		{
 			slice_mean_original=slice_mean[e][ch];
@@ -139,8 +128,8 @@ int Unwrap3DGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 				else
 					offset[e][ch][sl]=0;
 			}
-		}
- 	
+		}*/
+ 		//if images are highpass filtered, this doesn't help
 		///////////////////
 
 	
@@ -152,15 +141,14 @@ int Unwrap3DGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 			{
 				 // Read the image
 				 try {
-				    temp_storage->readImage("here", ordering[j*num_slices+i], image);///number of slices //ordering[num_slices*j+i]  <--necessary is thread >1
+				    temp_storage->readImage("here", ordering[j*num_slices+i], image);///number of slices //ordering[num_slices*j+i]  <--necessary if thread >1
 				 }
 				 catch (std::exception &ex) {
 				    GERROR("Error reading image %d\n",i);
 				    return -1;
 				 }
 				 GadgetContainerMessage<ISMRMRD::ImageHeader>* mheader = new GadgetContainerMessage<ISMRMRD::ImageHeader >();
-				 //GDEBUG("%d %d\n",  ordering[j*num_slices+i], j*num_slices+i);
-				 header = mheader->getObjectPtr();
+				  header = mheader->getObjectPtr();
 				 *header = image.getHead();
 				 
 				header->data_type = ISMRMRD::ISMRMRD_FLOAT;//GADGET_IMAGE_REAL_FLOAT;
@@ -170,7 +158,6 @@ int Unwrap3DGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 				
 				data->getObjectPtr()->create(header->matrix_size[0], header->matrix_size[1],header->matrix_size[2], header->channels);
 								
-				//GINFO("%d %d %d %d\n",j*num_slices+i,header->matrix_size[0], header->matrix_size[1], header->channels);
 				data_ptr=data->getObjectPtr()->get_data_ptr();
 				
 				memcpy(data_ptr, image.getDataPtr(), image.getDataSize()); //copy image 
@@ -209,14 +196,6 @@ int Unwrap3DGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 		GINFO("Total for 3D Unwrap:%d\n",duration/1000000);
 	}
 	
-	//append (to particular set?)
-	//possibly start figuring out order (how would I know???)
-	//can save write order to make reading easier
-	
-//after some point
-	//start loading back (possibly out of order)
-	//either send pow pow pow or send image 'slab', latter may work better. 
-
 return GADGET_OK;
 
 }

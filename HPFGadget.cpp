@@ -48,7 +48,6 @@ int HPFGadget::process_config(ACE_Message_Block* mb)
 
 	}
 
-	//this->msg_queue()->high_water_mark(128);//This helps with memory. It's not a hard limit though. 
 	return GADGET_OK;
 }
 int HPFGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
@@ -91,7 +90,6 @@ int HPFGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 			for (int p = 0; p < xres*yres; p++) 
 			{
 			slicedata_ptr[p] = std::complex<float>(pixel[xres*yres*ch+p],0);
-			//slicedata_ptr[p] = im_ptr[xres*yres*ch+p]+offset[j][ch][i];
 			}
 	
 			hoNDFFT<float>::instance()->ifftshift2D(*slicedata);
@@ -123,9 +121,6 @@ int HPFGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 	{
 		float* mem = new float[xres>yres?xres*2:yres*2];
 		int dsig = sigma.value();
-
-		//if(dsig<1)
-			//dsig*=1000;//did they think it was FFT
 	
 		for(ch=0; ch<cres; ch++)
 		{				      

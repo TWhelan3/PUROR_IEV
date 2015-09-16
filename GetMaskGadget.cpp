@@ -17,41 +17,13 @@ return GADGET_OK;
 
 int GetMaskGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 {
-
-    	//std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
-      
+ 
 	GadgetContainerMessage< hoNDArray< std::complex<float> > >* m2 = AsContainerMessage< hoNDArray< std::complex<float> > > (m1->cont());
 	GadgetContainerMessage<ISMRMRD::MetaContainer> *meta = AsContainerMessage<ISMRMRD::MetaContainer>(m2->cont());
 
 	yres = m2->getObjectPtr()->get_size(0);
 	xres = m2->getObjectPtr()->get_size(1);
 	cres = m2->getObjectPtr()->get_size(3);
-
-	/////
-	/*m1->getObjectPtr()->data_type = ISMRMRD::ISMRMRD_FLOAT;//GADGET_IMAGE_REAL_FLOAT;
-	m1->getObjectPtr()->image_type = ISMRMRD::ISMRMRD_IMTYPE_PHASE;
-	//std::complex<float>* src = m2->getObjectPtr()->get_data_ptr();
-	//std::vector<float>  dst(m2->getObjectPtr()->get_number_of_elements());
-	
-	GadgetContainerMessage<hoNDArray< float > > *cm2 = new GadgetContainerMessage<hoNDArray< float > >();
-	hoNDArray< float > *phase_y_block = cm2->getObjectPtr();
-	try{phase_y_block->create(xres,yres,cres);}
-	catch (std::runtime_error &err){
-		GEXCEPTION(err,"Unable to create itohy in Unwrap Gadget");
-		return GADGET_FAIL;
-	}
-		
-	m1->cont(cm2);*/
-	/////
-
-
-	static int myid = 0;
-	myid++;
-	/*if(myid>6)
-	{
-		m1->release();
-		return GADGET_OK;
-	}*/
 	
 	int maskProcedure=maskflag.value();
 	int c;	
@@ -59,7 +31,7 @@ int GetMaskGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 
 	boost::shared_ptr< std::vector<size_t> > dims = m2->getObjectPtr()->get_dimensions();
 
-	//GDEBUG("%d Saving Queue Length  %d My Queue Length\n", this->next()->msg_queue()->message_count(), this->msg_queue()->message_count());
+
 	GadgetContainerMessage< hoNDArray<int>> *supportmasks = new GadgetContainerMessage<hoNDArray<int>>();
 	
 	try{supportmasks->getObjectPtr()->create(dims.get());} //create support mask
@@ -106,8 +78,6 @@ int GetMaskGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 			{
 				thr=graythresh_more(filter_mag);		//find threshold to use
 				mask_create(ch_sppt_mask,filter_mag,thr*1.5);
-				//mask_create(ch_mask,filter_mag,thr*.05);
-				
 			}			
 			else
 			{
@@ -115,27 +85,12 @@ int GetMaskGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 				mask_create(ch_sppt_mask,filter_mag,threshold.value());
 				mask_create(ch_mask,filter_mag,threshold2.value());
 
-				//thr=graythresh_more(filter_mag);
-				//mask_create(ch_sppt_mask,filter_mag,thr*1.5);
-				//mask_create(ch_mask,filter_mag,0);
-			
-
 			}
-
-			/*for(int jj=0; jj<yres;jj++)
-				for(int ii=0; ii<xres; ii++)
-					phase_y_block->get_data_ptr()[ii*yres+jj] =filter_mag[ii][jj];//ch_sppt_mask[ii*yres+jj];*/
 			for(int ii=0; ii<xres; ii++)
 			{
 				delete[] filter_mag[ii];
 			}
-			/*for(int jj=0; jj<yres;jj++)
-			{
-				for(int ii=0; ii<xres; ii++)
-					sum+=ch_mask[ii*yres+jj];
-			}
-			if(sum!=(yres*xres))
-				GINFO("sum error in %d %d\n", c, myid);*/
+
 			delete[] filter_mag;
 			
 		}
@@ -170,9 +125,6 @@ int GetMaskGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 		if(meta)
 		masks->cont(meta);
 	}
-//std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
-//auto duration = std::chrono::duration_cast<std::chrono::microseconds>( t2 - t1 ).count();
-	
 	
 	 if (this->next()->putq(m1) < 0) { //pass to next gadget
 		GERROR("Failed to initialize Mask\n");
