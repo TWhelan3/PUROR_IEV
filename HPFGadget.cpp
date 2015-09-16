@@ -122,16 +122,21 @@ int HPFGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 	else//filter using deriche method
 	{
 		float* mem = new float[xres>yres?xres*2:yres*2];
+		int dsig = sigma.value();
+
+		//if(dsig<1)
+			//dsig*=1000;//did they think it was FFT
+	
 		for(ch=0; ch<cres; ch++)
 		{				      
 			       for ( int i=0; i<xres; i++ )
 				{
-				    DericheSmoothing(pixel+i*yres, yres, mem, 17, 0);//don't imagine this sigma is stable for all purposes
+				    DericheSmoothing(pixel+ch*xres*yres+i*yres, yres, mem, dsig, 0);//don't imagine this sigma is stable for all purposes
 				}
 				       
 				for ( int i=0; i<yres; i++ )
 				{
-				    DericheSmoothing(pixel+i, xres, mem, 17, yres);
+				    DericheSmoothing(pixel+ch*xres*yres+i, xres, mem, dsig, yres);
 				}
 				
 		}

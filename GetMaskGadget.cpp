@@ -112,12 +112,12 @@ int GetMaskGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 			else
 			{
 				ch_mask =masks->getObjectPtr()->get_data_ptr()+ch_offset;
-				//mask_create(ch_sppt_mask,filter_mag,threshold.value());
-				//mask_create(ch_mask,filter_mag,threshold2.value());
+				mask_create(ch_sppt_mask,filter_mag,threshold.value());
+				mask_create(ch_mask,filter_mag,threshold2.value());
 
-				thr=graythresh_more(filter_mag);
-				mask_create(ch_sppt_mask,filter_mag,thr*1.5);
-				mask_create(ch_mask,filter_mag,0);
+				//thr=graythresh_more(filter_mag);
+				//mask_create(ch_sppt_mask,filter_mag,thr*1.5);
+				//mask_create(ch_mask,filter_mag,0);
 			
 
 			}

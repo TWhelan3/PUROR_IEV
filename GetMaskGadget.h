@@ -22,7 +22,7 @@ public Gadget1<ISMRMRD::ImageHeader>
 	
 	GADGET_PROPERTY(maskflag, int, "How to acquire initial masks", 0);//0=default, 1=use thresholds provided, 2=load, 3=load support only
 	GADGET_PROPERTY(threshold, float, "Thresholding for mask", 0);
-	GADGET_PROPERTY(threshold2, float, "Support thresholding for mask", -1);
+	GADGET_PROPERTY(threshold2, float, "Support thresholding for mask", 0);
 	int xres;
 	int yres;
 	int cres;

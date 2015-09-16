@@ -681,7 +681,7 @@ void DericheSmoothing(float* pData, size_t N, float* mem, float sigma, size_t of
 
         for ( ii=0; ii<N; ii++ )
         {
-            pData[ii] -= forward[ii] + reverse[ii];//get difference
+            pData[ii] -= (forward[ii]+ reverse[ii]);//get difference and negate
         }
     }
     else
@@ -703,7 +703,7 @@ void DericheSmoothing(float* pData, size_t N, float* mem, float sigma, size_t of
 
             for ( ii=0; ii<N; ii++ )
             {
-                pData[ii*offset] -= forward[ii] + reverse[ii];//get difference
+                pData[ii*offset] -= (forward[ii] + reverse[ii]);//get difference and negate
             }
         }
     }
