@@ -29,6 +29,7 @@ int PhaseMaskGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 
 	maxvalue=max.value();
 	minvalue=min.value();
+	range=maxvalue-minvalue;
 	for(int i=0;i<num_pixels;i++)
 	{
 	
