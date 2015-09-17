@@ -24,19 +24,6 @@ int Unwrap3DGadget::process_config(ACE_Message_Block* mb)
 	ordering.resize(num_echos*num_slices);
 	slice_mean.resize(num_echos);
 
-	if(numVol.value()!=1)//I want to believe there's a better way. Gadget Properties can be vectors but can't make it work.
-	{
-		std::string buffer;
-		std::stringstream ss(limits.value());
-		while(getline(ss, buffer, ',')){
-		VolumeEnds.push_back(stof(buffer));
-		}
-	}
-	else
-		VolumeEnds.push_back(num_slices);	
-
-
-
 	for(int e=0;e<num_echos; e++)
 	{
 		slice_mean[e].resize(num_ch);
@@ -90,7 +77,7 @@ int Unwrap3DGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 		meta = AsContainerMessage<ISMRMRD::MetaContainer>(supportmasks_block->cont()->cont());
 	}
 	////////////////
-	/*for(ch=0; ch<cres; ch++)
+	for(ch=0; ch<cres; ch++)
 	{
 		tmp_mean=0;
 		k=0;
@@ -115,7 +102,7 @@ int Unwrap3DGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 		}
 
 		slice_mean[header->contrast][ch][header->image_series_index%num_slices]=tmp_mean;
-	}*/
+	}
 	//////////////
 	image.setHead(*(header));
 	/////
@@ -139,9 +126,8 @@ int Unwrap3DGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 
 	m1->release();
 	
-	for(int v=0; v<numVol.value(); v++)//better way than for loop? maybe remove below to another function?
-	{
-	if(myplace==VolumeEnds[v]*num_echos)//num_slices*num_echos)
+
+	if(myplace==num_slices*num_echos)
 	{
 		std::chrono::high_resolution_clock::time_point t1;
 		std::chrono::high_resolution_clock::time_point t2;
@@ -153,7 +139,7 @@ int Unwrap3DGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 		t1 = std::chrono::high_resolution_clock::now();
 		//parallelize this
 		//for outlerloop is echos or channels better?
-		/*for(e=0; e<num_echos; e++)
+		for(e=0; e<num_echos; e++)
 		for(ch=0;ch<cres;ch++)
 		{
 			slice_mean_original=slice_mean[e][ch];
@@ -167,18 +153,15 @@ int Unwrap3DGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 				else
 					offset[e][ch][sl]=0;
 			}
-		}*/
+		}
 		/////////////////////////////
  		//if images are highpass filtered, don't think this helps
 		///////////////////
 
 	
 	
-		int start=v==0?0:VolumeEnds[v-1];
-		
-		int end =VolumeEnds[v];
-		GINFO("Myplace=%d, V=%d, Start=%d, End=%d\n",myplace, v,start,end);		
-		for(int i=start; i<end; i++)//number of slices
+			
+		for(int i=0; i<num_slices; i++)//number of slices
 		{
 			for(int j=0; j<num_echos; j++)//number of echos/contrast
 			{
@@ -203,18 +186,18 @@ int Unwrap3DGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 								
 				data_ptr=data->getObjectPtr()->get_data_ptr();
 				
-				memcpy(data_ptr, image.getDataPtr(), image.getDataSize()); //copy image 
+				//memcpy(data_ptr, image.getDataPtr(), image.getDataSize()); //copy image 
 				im_pointer=image.getDataPtr();
 
 				//////don't forget to readd the memcpy
-				/*for(ch=0; ch<cres; ch++)
+				for(ch=0; ch<cres; ch++)
 				{
 					for (int p = xres*yres*ch; p < xres*yres*(ch+1); p++) 
 					{
 					//GDEBUG("%d %d %d %d\n",p,j, ch, i);
 					data_ptr[p] = im_pointer[p]+offset[j][ch][i];
 					}
-				}*/
+				}
 				/////
 				std::string attributes2;
 				image.getAttributeString(attributes2);
@@ -247,7 +230,6 @@ int Unwrap3DGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 		t2 = std::chrono::high_resolution_clock::now();
 		 duration= std::chrono::duration_cast<std::chrono::microseconds>( t2 - t1 ).count();
 		GINFO("Total time (s) for 3D Unwrap:%d\n",duration/1000000);
-	}
 	}
 	
 return GADGET_OK;

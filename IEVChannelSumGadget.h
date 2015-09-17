@@ -20,6 +20,7 @@ public Gadget1<ISMRMRD::ImageHeader>
 	GADGET_PROPERTY(iev, int, "Weight channels by IEV?", 0); 
 	GADGET_PROPERTY(norm, int, "Normalize channel(pixel) weights?", 0); 
 	GADGET_PROPERTY(output, int, "What to output?",0 ); //0=LFS 1=Phase
+	
 	void medianFilter(float* src_array,int xres,int yres);
 	int numEchos;
 	int num_slices;

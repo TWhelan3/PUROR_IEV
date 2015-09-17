@@ -20,8 +20,12 @@ public Gadget1<ISMRMRD::ImageHeader>
 	int num_slices;
 	int num_echos;
 	int num_ch;
+	
 	std::vector<int> ordering;//how would I get this from inputs?
+	std::vector<int> VolumeEnds;
 	std::vector<std::vector<std::vector<float>>> slice_mean;
+	GADGET_PROPERTY(limits, std::string, "Ends of Volumes", "");
+	GADGET_PROPERTY(numVol, int, "Number of Volumes", 1);
 
 	float FOVx;
 	float FOVy;
