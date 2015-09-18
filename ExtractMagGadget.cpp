@@ -21,7 +21,12 @@ int ExtractMagGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
     	//std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
       
 	GadgetContainerMessage< hoNDArray< std::complex<float> > >* m2 = AsContainerMessage< hoNDArray< std::complex<float> > > (m1->cont());
-	GadgetContainerMessage<ISMRMRD::MetaContainer> *meta = AsContainerMessage<ISMRMRD::MetaContainer>(m2->cont());
+	
+	if(!m2){
+		GERROR("Complex image array expected and not found.");
+		
+		return GADGET_FAIL;
+	}
 
 	yres = m2->getObjectPtr()->get_size(0);
 	xres = m2->getObjectPtr()->get_size(1);
@@ -32,9 +37,9 @@ int ExtractMagGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 	GadgetContainerMessage<hoNDArray< float > > *cm2 = new GadgetContainerMessage<hoNDArray< float > >();
 
 
-	*cm1->getObjectPtr() = *m1->getObjectPtr();//correct way to copy? based on extract gadget, since does a similar task
+	*cm1->getObjectPtr() = *m1->getObjectPtr();
 	cm1->getObjectPtr()->data_type = ISMRMRD::ISMRMRD_FLOAT;//GADGET_IMAGE_REAL_FLOAT;
-	cm1->getObjectPtr()->image_type = ISMRMRD::ISMRMRD_IMTYPE_PHASE;//BECAUSE I"M LAZY
+	cm1->getObjectPtr()->image_type = ISMRMRD::ISMRMRD_IMTYPE_PHASE;//To avoid weird autoscaling for now
 
 	cm1->cont(cm2);
 
@@ -45,7 +50,7 @@ int ExtractMagGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 	boost::shared_ptr< std::vector<size_t> > dims = m2->getObjectPtr()->get_dimensions();
 	try{mag->create(dims.get());}
 	catch (std::runtime_error &err){
-		GEXCEPTION(err,"Unable to create itohx in Unwrap Gadget");
+		GEXCEPTION(err,"Unable to allocate array in ExtractMag Gadget");
 		return GADGET_FAIL;
 	}
 
@@ -68,11 +73,11 @@ int ExtractMagGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 	
 	
 	 if (this->next()->putq(cm1) < 0) { //pass to next gadget
-		GERROR("Failed to initialize Mask\n");
+		GERROR("Failed to pass on magnitude\n");
 		cm1->release();
 	   return GADGET_FAIL;
 	}
-	m2->cont(NULL);//necessary so masks don't get deleted and stay connected. Release removes links further down chain.
+	m2->cont(NULL);//necessary so keep meta etc
 	m1->release(); 
 	return GADGET_OK;
 	

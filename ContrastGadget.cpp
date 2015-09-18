@@ -19,6 +19,12 @@ int ContrastGadget::process_config(ACE_Message_Block* mb)
 int ContrastGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 {
 	GadgetContainerMessage<hoNDArray< float > > *image_message =     AsContainerMessage<hoNDArray<float>>(m1->cont());
+
+	if(!image_message){
+		GERROR("Phase array (float/single) expected and not found.");
+		
+		return GADGET_FAIL;
+	}
 	int echo = m1->getObjectPtr()->contrast;	
 	static hoNDArray< float >  *collapsed;
 	static float* cptr;

@@ -54,9 +54,9 @@ int HPFGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 {
 	GadgetContainerMessage<hoNDArray<float > > *m2 =AsContainerMessage<hoNDArray<float >> (m1->cont());
 
-	if((m2)==0){
-
-		GINFO("ERROR in hpfg\n");
+	if(!m2){
+		GERROR("Phase array (float/single) expected and not found.");
+		
 		return GADGET_FAIL;
 	}
 	ISMRMRD::Image<float> image;
@@ -81,7 +81,7 @@ int HPFGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 		try{slicedata->create(header->matrix_size[0], header->matrix_size[1]);}
 		catch (std::runtime_error &err){
 		GEXCEPTION(err,"Creation Fail");
-		//return GADGET_FAIL;
+		return GADGET_FAIL;
 		}
 		for(ch=0; ch<cres; ch++)
 		{
@@ -121,7 +121,7 @@ int HPFGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 	{
 		float* mem = new float[xres>yres?xres*2:yres*2];
 		int dsig = sigma.value();
-	
+		//would parallelizing this help? Would take more mem obviously
 		for(ch=0; ch<cres; ch++)
 		{				      
 			       for ( int i=0; i<xres; i++ )
@@ -141,8 +141,8 @@ int HPFGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 
 	if (this->next()->putq(m1) == -1) {
 		m1->release();
-		GERROR("Unable to send image.\n");
-	    	return -1;
+		GERROR("Unable to pass on filtered image.\n");
+	    	return GADGET_FAIL;
 	}
 
 

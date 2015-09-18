@@ -32,7 +32,10 @@ int IEVChannelSumGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* 
 	static hoNDArray< float >  *collapsed;
 	static float* cptr;
 	if(!unwrapped_ptr)
+	{
 		GINFO("Wrong type\n");
+
+	}
 	if(echo==0)
 	{
 		collapsed = new hoNDArray< float >();
@@ -143,7 +146,7 @@ int IEVChannelSumGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* 
 
 			catch (std::runtime_error &err){
 			GEXCEPTION(err,"Unable to create output image");
-			//return GADGET_FAIL;  omp cannot have two exits. Could flag this and return error after
+			return GADGET_FAIL;  
 			}
 			
 			float* output_ptr=outimage->getObjectPtr()->get_data_ptr();
@@ -175,8 +178,8 @@ int IEVChannelSumGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* 
 
 			if (this->next()->putq(h1) == -1) {
 			m1->release();
-			GDEBUG("Unable to put collapsed images on next gadgets queue\n");
-			//return GADGET_FAIL; omp cannot have two exits. Could flag this and return error after
+				GERROR("Unable to put collapsed images on next gadget's queue\n");
+			return GADGET_FAIL; 
 			}
 			
 

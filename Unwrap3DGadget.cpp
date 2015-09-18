@@ -53,9 +53,9 @@ int Unwrap3DGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 	GadgetContainerMessage<hoNDArray<int>> *masks_block;
 	GadgetContainerMessage<ISMRMRD::MetaContainer> *meta;
 
-	if((m2 && supportmasks_block)==0){
+	if(!(m2 && supportmasks_block)){//may not NEED support mask.
 
-		GINFO("ERROR in u3dg\n");
+		GERROR("Image and/or support mask missing from message.\n");
 		return GADGET_FAIL;
 	}
 	ISMRMRD::Image<float> image;
@@ -84,8 +84,11 @@ int Unwrap3DGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 	else
 	{
 		masks_block = AsContainerMessage<hoNDArray<int>>(supportmasks_block->cont());
-		if(!masks_block)
-			GERROR("Soemthing's wrong");
+		if(!masks_block){
+			GERROR("Something's wrong with this message chain\n");
+			return GADGET_FAIL;
+		}
+	
 		masks=masks_block->getObjectPtr()->get_data_ptr();
 		meta = AsContainerMessage<ISMRMRD::MetaContainer>(supportmasks_block->cont()->cont());
 	}
@@ -177,7 +180,7 @@ int Unwrap3DGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 		int start=v==0?0:VolumeEnds[v-1];
 		
 		int end =VolumeEnds[v];
-		GINFO("Myplace=%d, V=%d, Start=%d, End=%d\n",myplace, v,start,end);		
+			
 		for(int i=start; i<end; i++)//number of slices
 		{
 			for(int j=0; j<num_echos; j++)//number of echos/contrast
@@ -188,7 +191,7 @@ int Unwrap3DGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 				 }
 				 catch (std::exception &ex) {
 				    GERROR("Error reading image %d\n",i);
-				    return -1;
+				    return GADGET_FAIL;
 				 }
 				 GadgetContainerMessage<ISMRMRD::ImageHeader>* mheader = new GadgetContainerMessage<ISMRMRD::ImageHeader >();
 				  header = mheader->getObjectPtr();
@@ -226,7 +229,7 @@ int Unwrap3DGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 				    }
 				    catch (std::exception &ex) {
 				       GERROR("Error parsing attribute string: %s\n", ex.what());
-				       return -1;
+				       return GADGET_FAIL;
 				    }
 				    data->cont(meta);
 				 }
@@ -237,7 +240,7 @@ int Unwrap3DGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 				 if (this->next()->putq(mheader) == -1) {
 				    mheader->release();
 				    GERROR("Unable to send image.\n");
-				    return -1;
+				    return GADGET_FAIL;
 				 }
 				
 			}

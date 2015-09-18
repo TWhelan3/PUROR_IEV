@@ -21,6 +21,11 @@ int GetMaskGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 	GadgetContainerMessage< hoNDArray< std::complex<float> > >* m2 = AsContainerMessage< hoNDArray< std::complex<float> > > (m1->cont());
 	GadgetContainerMessage<ISMRMRD::MetaContainer> *meta = AsContainerMessage<ISMRMRD::MetaContainer>(m2->cont());
 
+	if(!m2){
+		GERROR("Complex image array expected and not found.");
+		
+		return GADGET_FAIL;
+	}
 	yres = m2->getObjectPtr()->get_size(0);
 	xres = m2->getObjectPtr()->get_size(1);
 	cres = m2->getObjectPtr()->get_size(3);

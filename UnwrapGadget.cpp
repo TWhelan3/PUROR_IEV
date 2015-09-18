@@ -24,7 +24,7 @@ int UnwrapGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 	GadgetContainerMessage<ISMRMRD::MetaContainer> *meta;
 	if ((m1 && m2 && supportmasks)==0) {
 	GDEBUG("Wrong datatypes coming in! Gadget requires header, complex array and mask data\n");
-	return -1;
+	return GADGET_FAIL;
 	}
 
 	int channel_index;	
@@ -200,7 +200,7 @@ int UnwrapGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 
 	if (this->next()->putq(cm1) == -1) {
 		cm1->release();
-		GDEBUG("Unable to put images on next gadgets queue\n");
+		GERROR("Unable to put images on next gadgets queue\n");
 		return GADGET_FAIL;
 	}
 	
