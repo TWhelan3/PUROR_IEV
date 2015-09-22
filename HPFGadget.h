@@ -8,6 +8,7 @@
 #include "hoNDFFT.h"
 
 enum FilterProc 	{DERICHE, FFT};
+enum OUTPUT {LFS, PHASE};
 namespace Gadgetron{
 
   class EXPORTGADGETSPUROR HPFGadget:
@@ -21,8 +22,8 @@ public Gadget1<ISMRMRD::ImageHeader>
       
      	virtual int process_config(ACE_Message_Block*);
 	virtual int process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1);
-	GADGET_PROPERTY(filter_type, int, "Which filter to use", 0);//0=deriche, 1=FFT
 	GADGET_PROPERTY(sigma, float, "Sigma for FFT in filter", .003); 
+	GADGET_PROPERTY(output, int, "What to output?",0 ); //0=LFS 1=Phase
 	int yres,xres,cres;
 	int num_ch;
 
