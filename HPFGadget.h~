@@ -15,8 +15,6 @@ namespace Gadgetron{
 public Gadget1<ISMRMRD::ImageHeader>
     {
 
-	enum class OUTPUT {LFS, PHASE};
-
     public:
       	GADGET_DECLARE(HPFGadget);
 

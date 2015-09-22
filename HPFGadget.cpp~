@@ -68,7 +68,7 @@ int HPFGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 	GadgetContainerMessage<hoNDArray< float > > *filtered_phase_msg;
 	boost::shared_ptr< std::vector<size_t> > dims; 
 	float *filtered_image;
-	if(output.value()==int(OUTPUT::PHASE))
+	if(output.value()==1)
 	{
 		filtered_phase_msg = new GadgetContainerMessage<hoNDArray< float > >();
 		dims = m2->getObjectPtr()->get_dimensions();
@@ -119,7 +119,7 @@ int HPFGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 		hoNDFFT<float>::instance()->ifft(slicedata,0);
 		hoNDFFT<float>::instance()->fftshift2D(*slicedata);
 		
-		if(output.value()==int(OUTPUT::PHASE))
+		if(output.value()==1)
 		{
 			for (int p =0; p < xres*yres; p++) 
 			{
@@ -138,7 +138,7 @@ int HPFGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 	}	
 
 	
-	if(output.value()==int(OUTPUT::PHASE))
+	if(output.value()==1)
 	{
 	filtered_phase_msg->cont(m2->cont());
 	m2->cont(filtered_phase_msg);

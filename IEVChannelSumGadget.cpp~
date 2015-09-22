@@ -13,60 +13,67 @@ int IEVChannelSumGadget::process_config(ACE_Message_Block* mb)
 	ISMRMRD::IsmrmrdHeader hdr;
         ISMRMRD::deserialize(mb->rd_ptr(),hdr);
 	numEchos=hdr.encoding[0].encodingLimits.contrast().maximum +1; //number of echos is one more than highest numbers (0-based)
-	//this->msg_queue()->high_water_mark(128);
+	//this->msg_queue()->high_water_mark(128);//This helps with memory. It's not a hard limit though. 
 	echoTimes=hdr.sequenceParameters.get().TE.get();//should be doing checks, structures are optional
 	num_slices=hdr.encoding[0].reconSpace.matrixSize.z; //number of slices (will this always work?)
 	return GADGET_OK;
 }
 int IEVChannelSumGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 {
-	GadgetContainerMessage<hoNDArray< float > > *unwrapped_ptr =     AsContainerMessage<hoNDArray<float>>(m1->cont());
-	
-	//I think there should be a subtract first echo step involved that I am missing?
+	GadgetContainerMessage<hoNDArray< float > > *filtered_unwrapped_msg_ptr =     AsContainerMessage<hoNDArray<float>>(m1->cont());
+
+	GadgetContainerMessage<hoNDArray< float > > *unfiltered_unwrapped_msg_ptr =     AsContainerMessage<hoNDArray<float>>(m1->cont());//to allow check to work if output is LFS
+
+	if(output.value()==int(OUTPUT::PHASE))
+		unfiltered_unwrapped_msg_ptr = AsContainerMessage<hoNDArray<float>>(filtered_unwrapped_msg_ptr->cont());
 	static int c=0;	
 	int e;
-	int yres = unwrapped_ptr->getObjectPtr()->get_size(0);
-	int xres = unwrapped_ptr->getObjectPtr()->get_size(1);
-	int cres = unwrapped_ptr->getObjectPtr()->get_size(3);
+	int yres = filtered_unwrapped_msg_ptr->getObjectPtr()->get_size(0);
+	int xres = filtered_unwrapped_msg_ptr->getObjectPtr()->get_size(1);
+	int cres = filtered_unwrapped_msg_ptr->getObjectPtr()->get_size(3);
 	int image_series_index = m1->getObjectPtr()->image_series_index;
 	int echo = m1->getObjectPtr()->contrast;
 	float inv_echo_time;
-	static hoNDArray< float >  *collapsed;
-	static float* cptr;
-	if(!unwrapped_ptr)
-		GINFO("Wrong type\n");
+	static float* freq_ptr; 
+	static float* unfiltered_phase_ptr;
+	if(!filtered_unwrapped_msg_ptr || !unfiltered_unwrapped_msg_ptr)
+	{
+		GERROR("Wrong types received in IEVChannelSumGadget\n");
+		return GADGET_FAIL;
+	}
 	if(echo==0)
 	{
-		collapsed = new hoNDArray< float >();
-		try{collapsed->create(xres,yres,cres,numEchos);}
-			catch (std::runtime_error &err){
-		GEXCEPTION(err,"Unable to create collapsed space");
-		return GADGET_FAIL;
-			}
-		cptr=collapsed->get_data_ptr();
+		//create arrays to hold data from next slice of messages
+		freq_ptr=new float[xres*yres*cres*numEchos];
+			
+		if(output.value()==1)
+			unfiltered_phase_ptr=new float[xres*yres*cres*numEchos];
 	}
 
 	
-	float* uptr= unwrapped_ptr->getObjectPtr()->get_data_ptr();
+	float* filtered_phase_ptr= filtered_unwrapped_msg_ptr->getObjectPtr()->get_data_ptr();
 	
 	m1->getObjectPtr()->channels=numEchos;
 	inv_echo_time=1/echoTimes[echo];//to avoid millions of divisions per slice
-	for (int i = 0; i < xres*yres*cres; i++) 
-	{
-		cptr[echo*xres*yres*cres+i] = uptr[i]*inv_echo_time;
-				 
-	}
-	//need to save header (or possibly just the index, (contrast etc can come from that)) before deleting if all echos are required
-	unwrapped_ptr->release();
+
+	if(output.value()==1)
+		memcpy(unfiltered_phase_ptr+yres*xres*cres*echo, unfiltered_unwrapped_msg_ptr->getObjectPtr()->get_data_ptr(), xres*yres*cres*sizeof(float));
 	
+	for (int i = 0; i < xres*yres*cres; i++) 
+		freq_ptr[echo*xres*yres*cres+i] = filtered_phase_ptr[i]*inv_echo_time;
+	
+	 
+	//need to save header (or possibly just the index, (contrast etc can come from that)) before deleting if all echos are required
+	//acquisition time stamp seems important too, does meta data change?
+	filtered_unwrapped_msg_ptr->release();
 	if(echo==(numEchos-1))
 	{	
 		
 		float* weights= new float[xres*yres*cres];
 		float** channel_weights= new float* [cres];
 		float* to_normalize = new float[xres*yres];
-		int ch,i;
-		//GDEBUG("%d Saving Queue Length  %d My Queue Length\n", this->next()->msg_queue()->message_count(), this->msg_queue()->message_count());
+		int ch;
+		
 		if(iev.value()==1)
 		{
 			#pragma omp parallel //expanded parallel --- to allow sample to be allocated once
@@ -78,7 +85,7 @@ int IEVChannelSumGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* 
 				{
 					/////////
 					for(int j = 0; j < numEchos; j++)
-						sample[j]=cptr[i+j*xres*yres*cres];     //assuming all(6-10 at at time) pages can be held in memory, this isn't terrible
+						sample[j]=freq_ptr[i+j*xres*yres*cres];     //assuming all(6-10 at at time) pages can be held in memory, this isn't terrible
 					
 					weights[i]=stdev(sample, numEchos);		//find standard deviation between echoes
 					/////				
@@ -86,18 +93,20 @@ int IEVChannelSumGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* 
 				delete[] sample;
 			}
 			
-			#pragma omp parallel for private(ch,i)
+			#pragma omp parallel for private(ch)
 			for(ch = 0; ch < cres; ch++)
 			{	
 				float* temp_array;
 		
 			
 				channel_weights[ch]=&weights[ch*xres*yres];
-				//medianFilter(channel_weights[ch],xres,yres);
+				medianFilter(channel_weights[ch],xres,yres);
 				for (int i = 0; i < xres*yres; i++)
 				{
 				  channel_weights[ch][i]=1/(channel_weights[ch][i]+FLT_MIN);		//weight as inverse, 
 				}
+
+				
 				
 			}
 			if(norm.value()==1)
@@ -120,7 +129,7 @@ int IEVChannelSumGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* 
 		}
 		else
 		{
-			#pragma omp parallel for private(ch,i)
+			#pragma omp parallel for private(ch)
 			for(int ch=0; ch< cres; ch++)	
 			{
 				channel_weights[ch]=&weights[ch*xres*yres];	
@@ -143,8 +152,8 @@ int IEVChannelSumGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* 
 			try{outimage->getObjectPtr()->create(xres,yres);}	
 
 			catch (std::runtime_error &err){
-			GEXCEPTION(err,"Unable to create output image");
-			//return GADGET_FAIL;  omp cannot have two exits. Could flag this and return error after
+			GEXCEPTION(err,"Unable to create output image\n");
+			return GADGET_FAIL;  
 			}
 			
 			float* output_ptr=outimage->getObjectPtr()->get_data_ptr();
@@ -156,28 +165,34 @@ int IEVChannelSumGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* 
 			h1->getObjectPtr()->image_series_index = e;//h1->getObjectPtr()->image_series_index % num_slices+e*num_slices;//not right, but distinguishes for now
 			h1->cont(outimage);
 
-
+			if(output.value()==0)
+			{
 			for (int i = 0; i < xres*yres; i++)
-				output_ptr[i]=cptr[e*xres*yres*cres+i]*channel_weights[0][i]; //instead of setting to 0 and adding first channel
+				output_ptr[i]=freq_ptr[e*xres*yres*cres+i]*channel_weights[0][i]; //instead of setting to 0 and adding first channel
 			for(int ch=1; ch< cres; ch++)		
 				for (int i = 0; i < xres*yres; i++)
 				{
-				output_ptr[i]+=cptr[e*xres*yres*cres+xres*yres*ch+i]*channel_weights[ch][i];
+				output_ptr[i]+=freq_ptr[e*xres*yres*cres+xres*yres*ch+i]*channel_weights[ch][i];
 				}
-
-			if(output.value()==PHASE)
+			}
+			else if(output.value()==1)
 			{
-				float echo_time=echoTimes[e];
 				for (int i = 0; i < xres*yres; i++)
-					output_ptr[i]*=echo_time;
+				{
+				output_ptr[i]=unfiltered_phase_ptr[e*xres*yres*cres+i]*channel_weights[0][i]; //instead of setting to 0 and adding first channel
+				}
+				for(int ch=1; ch< cres; ch++)	
+				for (int i = 1; i < xres*yres; i++)
+				output_ptr[i]+=unfiltered_phase_ptr[e*xres*yres*cres+xres*yres*ch+i]*channel_weights[ch][i];; //instead of setting to 0 and adding first channel
+			
 			}
 			
-
+					
 
 			if (this->next()->putq(h1) == -1) {
 			m1->release();
-			GDEBUG("Unable to put collapsed images on next gadgets queue\n");
-			//return GADGET_FAIL; omp cannot have two exits. Could flag this and return error after
+				GERROR("Unable to put collapsed images on next gadget's queue\n");
+			return GADGET_FAIL; 
 			}
 			
 
@@ -186,10 +201,11 @@ int IEVChannelSumGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* 
 	
 
 		delete[] to_normalize;
-		delete collapsed;
+		delete[] freq_ptr;
 		delete[] weights;
-		
 		delete[] channel_weights;
+		if(output.value()==1)
+			delete[] unfiltered_phase_ptr;
 		
 
 	}

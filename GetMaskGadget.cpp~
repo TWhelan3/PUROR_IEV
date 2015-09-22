@@ -48,7 +48,7 @@ int GetMaskGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 		
 
 	GadgetContainerMessage< hoNDArray<int>> *masks = new GadgetContainerMessage<hoNDArray<int>>();
-	if(maskProcedure!=int(MASKFLAG::DEFAULT))//0=default, 1=use thresholds provided, 2=load
+	if(maskProcedure!=0)//0=default, 1=use thresholds provided, 2=load
 	{
 		masks = new GadgetContainerMessage<hoNDArray<int>>();
 		try{masks->getObjectPtr()->create(dims.get());}
@@ -72,14 +72,14 @@ int GetMaskGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 		int sum=0;
 		int *ch_sppt_mask=supportmasks->getObjectPtr()->get_data_ptr()+ch_offset;
 		int *ch_mask;
-		if(maskProcedure<2)//not loading mask
+		if(maskProcedure<2)
 		{
 			filter_mag=filter2(complex_data_ptr+ch_offset, xres,yres); //mean filter image
 			
 		
 		
 
-			if(maskProcedure==int(MASKFLAG::DEFAULT))
+			if(maskProcedure==0)
 			{
 				thr=graythresh_more(filter_mag);		//find threshold to use
 				mask_create(ch_sppt_mask,filter_mag,thr*1.5);
@@ -105,7 +105,7 @@ int GetMaskGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 			//load support mask from file
 			//sppt_mask_ptr[c]=?
 	
-			if(maskProcedure==int(MASKFLAG::LOAD_BOTH))
+			if(maskProcedure==2)
 			{
 			//load signal mask from file
 			//mask_ptr[c]=?
@@ -118,7 +118,7 @@ int GetMaskGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 	}
 	//build message block chain to pass on
 	m2->cont(supportmasks);
-	if(maskProcedure==int(MASKFLAG::DEFAULT) || threshold2.value()==0)
+	if(maskProcedure==0 || threshold2.value()==0)
 	{
 		*(supportmasks->getObjectPtr()->get_data_ptr())-=2;
 		if(meta)

@@ -12,12 +12,10 @@ namespace Gadgetron
 class EXPORTGADGETSPUROR GetMaskGadget : 
 public Gadget1<ISMRMRD::ImageHeader>
 {
-	enum class MASKFLAG { DEFAULT, THR_PROVIDED, LOAD_BOTH, LOAD_SPPT};
-	
- 	public:
-  	GADGET_DECLARE(GetMaskGadget)
+ public:
+  GADGET_DECLARE(GetMaskGadget)
 
-  	protected:
+    protected:
 
 	virtual int process_config(ACE_Message_Block* mb);
   	virtual int process( GadgetContainerMessage< ISMRMRD::ImageHeader>* m1);

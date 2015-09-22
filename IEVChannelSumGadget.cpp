@@ -24,7 +24,7 @@ int IEVChannelSumGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* 
 
 	GadgetContainerMessage<hoNDArray< float > > *unfiltered_unwrapped_msg_ptr =     AsContainerMessage<hoNDArray<float>>(m1->cont());//to allow check to work if output is LFS
 
-	if(output.value()==1)
+	if(output.value()==int(OUTPUT::PHASE))
 		unfiltered_unwrapped_msg_ptr = AsContainerMessage<hoNDArray<float>>(filtered_unwrapped_msg_ptr->cont());
 	static int c=0;	
 	int e;
@@ -46,7 +46,7 @@ int IEVChannelSumGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* 
 		//create arrays to hold data from next slice of messages
 		freq_ptr=new float[xres*yres*cres*numEchos];
 			
-		if(output.value()==1)
+		if(output.value()==int(OUTPUT::PHASE))
 			unfiltered_phase_ptr=new float[xres*yres*cres*numEchos];
 	}
 
@@ -56,7 +56,7 @@ int IEVChannelSumGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* 
 	m1->getObjectPtr()->channels=numEchos;
 	inv_echo_time=1/echoTimes[echo];//to avoid millions of divisions per slice
 
-	if(output.value()==1)
+	if(output.value()==int(OUTPUT::PHASE))
 		memcpy(unfiltered_phase_ptr+yres*xres*cres*echo, unfiltered_unwrapped_msg_ptr->getObjectPtr()->get_data_ptr(), xres*yres*cres*sizeof(float));
 	
 	for (int i = 0; i < xres*yres*cres; i++) 
@@ -74,7 +74,7 @@ int IEVChannelSumGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* 
 		float* to_normalize = new float[xres*yres];
 		int ch;
 		
-		if(iev.value()==1)
+		if(iev.value()==int(IEV::YES))
 		{
 			#pragma omp parallel //expanded parallel --- to allow sample to be allocated once
 			{
@@ -109,23 +109,22 @@ int IEVChannelSumGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* 
 				
 				
 			}
-			if(norm.value()==1)
-			{
-				for (int i = 0; i < xres*yres; i++)
-					to_normalize[i]	= 0;	
+			
+			for (int i = 0; i < xres*yres; i++)
+				to_normalize[i]	= 0;	
 
-				for(int ch=0; ch< cres; ch++)		
-					for (int i = 0; i < xres*yres; i++)
-					{
-					to_normalize[i]+=channel_weights[ch][i];
-					}
-		
-				for(int ch=0; ch< cres; ch++)		
-					for (int i = 0; i < xres*yres; i++)
-					{
-					channel_weights[ch][i]/=to_normalize[i];			//normalize weights
-					}
-			}
+			for(int ch=0; ch< cres; ch++)		
+				for (int i = 0; i < xres*yres; i++)
+				{
+				to_normalize[i]+=channel_weights[ch][i];
+				}
+	
+			for(int ch=0; ch< cres; ch++)		
+				for (int i = 0; i < xres*yres; i++)
+				{
+				channel_weights[ch][i]/=to_normalize[i];			//normalize weights
+				}
+			
 		}
 		else
 		{
@@ -165,7 +164,7 @@ int IEVChannelSumGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* 
 			h1->getObjectPtr()->image_series_index = e;//h1->getObjectPtr()->image_series_index % num_slices+e*num_slices;//not right, but distinguishes for now
 			h1->cont(outimage);
 
-			if(output.value()==0)
+			if(output.value()==int(OUTPUT::LFS))
 			{
 			for (int i = 0; i < xres*yres; i++)
 				output_ptr[i]=freq_ptr[e*xres*yres*cres+i]*channel_weights[0][i]; //instead of setting to 0 and adding first channel
@@ -175,7 +174,7 @@ int IEVChannelSumGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* 
 				output_ptr[i]+=freq_ptr[e*xres*yres*cres+xres*yres*ch+i]*channel_weights[ch][i];
 				}
 			}
-			else if(output.value()==1)
+			else if(output.value()==int(OUTPUT::PHASE))
 			{
 				for (int i = 0; i < xres*yres; i++)
 				{
@@ -204,7 +203,7 @@ int IEVChannelSumGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* 
 		delete[] freq_ptr;
 		delete[] weights;
 		delete[] channel_weights;
-		if(output.value()==1)
+		if(output.value()==int(OUTPUT::PHASE))
 			delete[] unfiltered_phase_ptr;
 		
 
