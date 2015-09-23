@@ -12,11 +12,16 @@ int Unwrap3DGadget::process_config(ACE_Message_Block* mb)
 {
 	 boost::filesystem::remove("/tmp/temp.ismrmrd");
 	temp_storage = new ISMRMRD::Dataset("/tmp/temp.ismrmrd","storage", true);
-
+	this->msg_queue()->high_water_mark(128);//This helps with memory. It's not a hard limit though. 
 	ISMRMRD::IsmrmrdHeader hdr;
         ISMRMRD::deserialize(mb->rd_ptr(),hdr);
 	num_echos=hdr.encoding[0].encodingLimits.contrast().maximum +1; //number of echos is one more than highest numbers (0-based)
 	num_slices=hdr.encoding[0].reconSpace.matrixSize.z; //number of slices (will this always work?)
+
+
+	yres=hdr.encoding[0].reconSpace.matrixSize.x; //match my (and MATLABs) unfortunate convention 
+	xres=hdr.encoding[0].reconSpace.matrixSize.y;
+
 	//This is an optional part of the header and not sure if it will always be appropriate. # channels in acquisition may not be # channels in image gadget receives if they are already combined
 	//for now leacing cres (actual image channels) separate
 	num_ch=hdr.acquisitionSystemInformation.get().receiverChannels();
@@ -49,11 +54,11 @@ int Unwrap3DGadget::process_config(ACE_Message_Block* mb)
 int Unwrap3DGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 {
 	GadgetContainerMessage<hoNDArray<float > > *m2 =AsContainerMessage<hoNDArray<float >> (m1->cont());
-	GadgetContainerMessage<hoNDArray<int>> *supportmasks_block = AsContainerMessage<hoNDArray<int>>(m2->cont());
-	GadgetContainerMessage<hoNDArray<int>> *masks_block;
+	GadgetContainerMessage<hoNDArray<int>> *supportmasks_msg = AsContainerMessage<hoNDArray<int>>(m2->cont());
+	GadgetContainerMessage<hoNDArray<int>> *masks_msg;
 	GadgetContainerMessage<ISMRMRD::MetaContainer> *meta;
 
-	if(!(m2 && supportmasks_block)){//may not NEED support mask.
+	if(!(m2 && supportmasks_msg)){//may not NEED support mask.
 
 		GERROR("Image and/or support mask missing from message.\n");
 		return GADGET_FAIL;
@@ -62,13 +67,13 @@ int Unwrap3DGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 	ISMRMRD::ImageHeader *header=m1->getObjectPtr();
 	int fullsignal =0;
 	float tmp_mean=0;
-	int k,ii,ch,e;
+	int ch, e;
 
-	int yres = m2->getObjectPtr()->get_size(0);	
-	int xres = m2->getObjectPtr()->get_size(1);
-	int cres = header->channels;
+	//yres = m2->getObjectPtr()->get_size(0);	
+	//xres = m2->getObjectPtr()->get_size(1);
+	cres = header->channels;
 	float *unwrapped_x = m2->getObjectPtr()->get_data_ptr();
-	int *supportmasks = supportmasks_block->getObjectPtr()->get_data_ptr();
+	int *supportmasks = supportmasks_msg->getObjectPtr()->get_data_ptr();
 	int *masks;
 
 	float* im_ptr;
@@ -78,19 +83,19 @@ int Unwrap3DGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 	{
 		fullsignal=1;
 		*supportmasks+=2;
-		meta=  AsContainerMessage<ISMRMRD::MetaContainer>(supportmasks_block->cont());
+		meta=  AsContainerMessage<ISMRMRD::MetaContainer>(supportmasks_msg->cont());
 
 	}
 	else
 	{
-		masks_block = AsContainerMessage<hoNDArray<int>>(supportmasks_block->cont());
-		if(!masks_block){
+		masks_msg = AsContainerMessage<hoNDArray<int>>(supportmasks_msg->cont());
+		if(!masks_msg){
 			GERROR("Something's wrong with this message chain\n");
 			return GADGET_FAIL;
 		}
 	
-		masks=masks_block->getObjectPtr()->get_data_ptr();
-		meta = AsContainerMessage<ISMRMRD::MetaContainer>(supportmasks_block->cont()->cont());
+		masks=masks_msg->getObjectPtr()->get_data_ptr();
+		meta = AsContainerMessage<ISMRMRD::MetaContainer>(supportmasks_msg->cont()->cont());
 	}
 	////////////////
 	/*for(ch=0; ch<cres; ch++)

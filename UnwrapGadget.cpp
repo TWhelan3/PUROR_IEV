@@ -10,42 +10,44 @@ int UnwrapGadget::process_config(ACE_Message_Block* mb)
 {
 
 	this->msg_queue()->high_water_mark(128);//This helps with memory. It's not a hard limit though. 
+	ISMRMRD::IsmrmrdHeader hdr;
+        ISMRMRD::deserialize(mb->rd_ptr(),hdr);
+	yres=hdr.encoding[0].reconSpace.matrixSize.x; //match my (and MATLABs) unfortunate convention 
+	xres=hdr.encoding[0].reconSpace.matrixSize.y;
 
 	return GADGET_OK;
 }
 int UnwrapGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 {
 	static int myid = 0;
-	
-	
+
 	GadgetContainerMessage<hoNDArray<std::complex<float> > > *m2 =AsContainerMessage<hoNDArray<std::complex<float> > > (m1->cont());
-	 GadgetContainerMessage<hoNDArray<int>> *supportmasks = AsContainerMessage<hoNDArray<int>>(m2->cont());
-	GadgetContainerMessage<hoNDArray<int>> *masks;
+	 GadgetContainerMessage<hoNDArray<int>> *supportmask_msg = AsContainerMessage<hoNDArray<int>>(m2->cont());
+	GadgetContainerMessage<hoNDArray<int>> *mask_msg;
 	GadgetContainerMessage<ISMRMRD::MetaContainer> *meta;
-	if ((m1 && m2 && supportmasks)==0) {
+	if (!(m2 && supportmask_msg)) {
 	GDEBUG("Wrong datatypes coming in! Gadget requires header, complex array and mask data\n");
 	return GADGET_FAIL;
 	}
 
 	int channel_index;	
-	yres = m2->getObjectPtr()->get_size(0);	
-	xres = m2->getObjectPtr()->get_size(1);
-	cres = m1->getObjectPtr()->channels;
+	//yres = m2->getObjectPtr()->get_size(0);	
+	//xres = m2->getObjectPtr()->get_size(1);
+	num_ch = m1->getObjectPtr()->channels;
 
-	GadgetContainerMessage<ISMRMRD::ImageHeader>* cm1 = new GadgetContainerMessage<ISMRMRD::ImageHeader>();
-	GadgetContainerMessage<hoNDArray< float > > *cm2 = new GadgetContainerMessage<hoNDArray< float > >();
-	hoNDArray< float > *phase_x_block = cm2->getObjectPtr();	
+	GadgetContainerMessage<ISMRMRD::ImageHeader>* new_header_msg = new GadgetContainerMessage<ISMRMRD::ImageHeader>();
+	GadgetContainerMessage<hoNDArray< float > > *new_image_msg = new GadgetContainerMessage<hoNDArray< float > >();
+	hoNDArray< float > *phase_x_block = new_image_msg->getObjectPtr();	
 	hoNDArray< float > *phase_y_block = new hoNDArray< float >;
 
 	bool fullsignal;
 
-
 	fullsignal=0;
 
 	//Copy the header
-	*cm1->getObjectPtr() = *m1->getObjectPtr();//correct way to copy? based on extract gadget, since does a similar task
-	cm1->getObjectPtr()->data_type = ISMRMRD::ISMRMRD_FLOAT;//GADGET_IMAGE_REAL_FLOAT;
-	cm1->getObjectPtr()->image_type = ISMRMRD::ISMRMRD_IMTYPE_PHASE;
+	*new_header_msg->getObjectPtr() = *m1->getObjectPtr();//correct way to copy? based on extract gadget, since does a similar task
+	new_header_msg->getObjectPtr()->data_type = ISMRMRD::ISMRMRD_FLOAT;//GADGET_IMAGE_REAL_FLOAT;
+	new_header_msg->getObjectPtr()->image_type = ISMRMRD::ISMRMRD_IMTYPE_PHASE;
 
 	boost::shared_ptr< std::vector<size_t> > dims = m2->getObjectPtr()->get_dimensions();
 
@@ -56,7 +58,7 @@ int UnwrapGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 	}
 
 
-	try{phase_y_block->create(yres*xres*cres);}
+	try{phase_y_block->create(yres*xres*num_ch);}
 	catch (std::runtime_error &err){
 		GEXCEPTION(err,"Unable to create itohy in Unwrap Gadget");
 		return GADGET_FAIL;
@@ -64,48 +66,41 @@ int UnwrapGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 
 	std::complex<float>* src = m2->getObjectPtr()->get_data_ptr();
 	std::vector<float>  dst(phase_x_block->get_number_of_elements());
-	cm1->getObjectPtr()->data_type = ISMRMRD::ISMRMRD_FLOAT;//GADGET_IMAGE_REAL_FLOAT;
-	cm1->getObjectPtr()->image_type = ISMRMRD::ISMRMRD_IMTYPE_PHASE;
+	new_header_msg->getObjectPtr()->data_type = ISMRMRD::ISMRMRD_FLOAT;//GADGET_IMAGE_REAL_FLOAT;
+	new_header_msg->getObjectPtr()->image_type = ISMRMRD::ISMRMRD_IMTYPE_PHASE;
 
-
-	if(*(supportmasks->getObjectPtr()->get_data_ptr())<0)//fullsignal masks
+	if(*(supportmask_msg->getObjectPtr()->get_data_ptr())<0)//fullsignal masks
 	{
 		fullsignal=1;
-		*(supportmasks->getObjectPtr()->get_data_ptr())+=2;
-		meta=  AsContainerMessage<ISMRMRD::MetaContainer>(supportmasks->cont());
+		*(supportmask_msg->getObjectPtr()->get_data_ptr())+=2;
+		meta=  AsContainerMessage<ISMRMRD::MetaContainer>(supportmask_msg->cont());
 	}
 	else
 	{
-		masks = AsContainerMessage<hoNDArray<int>>(supportmasks->cont());
-		meta = AsContainerMessage<ISMRMRD::MetaContainer>(masks->cont());
+		mask_msg = AsContainerMessage<hoNDArray<int>>(supportmask_msg->cont());
+		meta = AsContainerMessage<ISMRMRD::MetaContainer>(mask_msg->cont());
 	}
-
-
-
-
 	#pragma omp parallel for private(channel_index)	
-	for(channel_index=0; channel_index<cres; channel_index++)
+	for(channel_index=0; channel_index<num_ch; channel_index++)
 	{
 		MaskData* md= new MaskData(yres,xres);
 
 		int ch_offset= xres*yres*channel_index;
 		float* phase_x, *phase_y;
 		int *ch_mask;
-		int *ch_sppt_mask=supportmasks->getObjectPtr()->get_data_ptr()+ch_offset;
+		int *ch_sppt_mask=supportmask_msg->getObjectPtr()->get_data_ptr()+ch_offset;
 		
-		
-	
 		if(fullsignal)//fullsignal masks
 		{
 			md->fullsignal=1;
 		}
 		else
 		{
-			ch_mask=masks->getObjectPtr()->get_data_ptr()+ch_offset;
+			ch_mask=mask_msg->getObjectPtr()->get_data_ptr()+ch_offset;
 			memcpy(md->MASK,ch_mask, yres*xres*sizeof(int));
 		}
-	
-			memcpy(md->support_MASK,ch_sppt_mask, yres*xres*sizeof(int));
+
+		memcpy(md->support_MASK,ch_sppt_mask, yres*xres*sizeof(int));
 		
 		md->iniMask();
 		md->iniMask_y();
@@ -131,7 +126,6 @@ int UnwrapGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 		}
 		else
 		{
-			
 			shift_to_mean(phase_x, md);
 			shift_to_mean_y(phase_y,md);
 		}
@@ -151,7 +145,6 @@ int UnwrapGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 			//Unwrapped columns have greater quality
 			
 			center_y(phase_y, phase_x, t_mask,xy_start_L,xy_start_R);//Align unwrapped rows with best part columns
-			
 			
 			calc_quality_y(phase_x, mask,quality_y,xy_start_dw,xy_start_up); //Recalculate best part of unwrapped rows
 			
@@ -178,9 +171,6 @@ int UnwrapGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 		
 		diff_x(phase_x, fullsignal,md);
 
-
-
-
 		delete md;
 
 	
@@ -189,23 +179,23 @@ int UnwrapGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 
 	delete phase_y_block;
 	//need to deal with meta
-	cm1->cont(cm2);
+	new_header_msg->cont(new_image_msg);
 
-	cm2->cont(supportmasks);
+	new_image_msg->cont(supportmask_msg);
 
 	if(fullsignal)
 	{
-		supportmasks->getObjectPtr()->get_data_ptr()[0]-=2;
+		supportmask_msg->getObjectPtr()->get_data_ptr()[0]-=2;
 	}
 
-	if (this->next()->putq(cm1) == -1) {
-		cm1->release();
+	if (this->next()->putq(new_header_msg) == -1) {
+		new_header_msg->release();
 		GERROR("Unable to put images on next gadgets queue\n");
 		return GADGET_FAIL;
 	}
 	
 	if(myid%24==0)//debugging value, shows approximately how long to do four sets of six echos
-	GINFO("Unwrapped %d \n",cm1->getObjectPtr()->image_index);
+	GINFO("Unwrapped %d \n",new_header_msg->getObjectPtr()->image_index);
 	++myid;
 	m2->cont(NULL);//necessary so masks don't get deleted and stay connected. Release removes links further down chain.
 	m1->release(); 

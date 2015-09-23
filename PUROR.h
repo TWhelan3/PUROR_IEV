@@ -8,6 +8,7 @@
 #include "gadgetron_PUROR_export.h"
 #include <math.h>
 #include "Gadget.h"
+#include "GadgetStreamInterface.h"
 #include "hoNDArray.h"
 #include "ismrmrd/ismrmrd.h"
 #include "ismrmrd/dataset.h"

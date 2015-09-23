@@ -18,10 +18,6 @@ public Gadget1<ISMRMRD::ImageHeader>
 	
 	GADGET_PROPERTY(min, float, "Completely suppresed", PI*-1);
 	GADGET_PROPERTY(max, float, "Unity Value", 0);
-
-	float FOVx;
-	float FOVy;
-
      };
 }
 

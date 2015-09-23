@@ -22,7 +22,9 @@ public Gadget1<ISMRMRD::ImageHeader>
 
 	int numEchos;
 	int numSlices;
-
+	int numPixels;
+	hoNDArray< float >  *collapsed;
+	float* cptr;
 
       
      };

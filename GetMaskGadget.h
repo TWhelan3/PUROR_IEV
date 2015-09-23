@@ -27,7 +27,7 @@ public Gadget1<ISMRMRD::ImageHeader>
 	GADGET_PROPERTY(threshold2, float, "Support thresholding for mask", 0);
 	int xres;
 	int yres;
-	int cres;
+	int num_ch;
 	
 	void mask_create(int* outputptr, float **filter_mag, float filter_th);
 	float graythresh_more(float** image);

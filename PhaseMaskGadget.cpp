@@ -4,7 +4,6 @@
 //Output ImageHeader->Float 3D Array (Phase Data) -> //
 
 #include "PhaseMaskGadget.h"
-#include "GadgetStreamInterface.h"
 namespace Gadgetron{
 
 int PhaseMaskGadget::process_config(ACE_Message_Block* mb)

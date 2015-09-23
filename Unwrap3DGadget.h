@@ -15,6 +15,8 @@ public Gadget1<ISMRMRD::ImageHeader>
       
      	virtual int process_config(ACE_Message_Block*);
 	virtual int process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1);
+	int yres;
+	int xres;
 	int cres;
 	ISMRMRD::Dataset* temp_storage;
 	int num_slices;

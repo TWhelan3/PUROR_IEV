@@ -27,6 +27,19 @@ int HPFGadget::process_config(ACE_Message_Block* mb)
 	x2.resize(yres);
 	y2.resize(xres);
 
+
+	//Should look for a more general way, but this keeps it safe in my chains at least
+	Gadget* g=this->get_controller()->find_gadget("IEVChannelSum");
+
+	if(!g)
+		g=this->get_controller()->find_gadget("Accumulator");
+
+	if(g && strcmp(g->find_property("output")->string_value(),"1")==0)//does a later gadget need phase?
+	{
+		GINFO("A later gadget needs phase. Output property being overridden.\n");
+		output.value(1);
+	}
+
 	for(int i=0; i<yres; i++)
 		x2[i]=pow((i-yres/2)*FOVx/yres,2);
 

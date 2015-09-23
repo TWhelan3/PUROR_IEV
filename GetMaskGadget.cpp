@@ -8,7 +8,13 @@ using namespace Gadgetron;
 
 int GetMaskGadget::process_config(ACE_Message_Block* mb)
 {	
-this->msg_queue()->high_water_mark(128);//This helps with memory. It's not a hard limit though. 
+	this->msg_queue()->high_water_mark(128);//This helps with memory. It's not a hard limit though. 
+
+	ISMRMRD::IsmrmrdHeader hdr;
+        ISMRMRD::deserialize(mb->rd_ptr(),hdr);
+	yres=hdr.encoding[0].reconSpace.matrixSize.x; //match my (and MATLABs) unfortunate convention 
+	xres=hdr.encoding[0].reconSpace.matrixSize.y;
+
 
 return GADGET_OK;
 }
@@ -26,12 +32,12 @@ int GetMaskGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 		
 		return GADGET_FAIL;
 	}
-	yres = m2->getObjectPtr()->get_size(0);
-	xres = m2->getObjectPtr()->get_size(1);
-	cres = m2->getObjectPtr()->get_size(3);
+	//yres = m2->getObjectPtr()->get_size(0);
+	//xres = m2->getObjectPtr()->get_size(1);
+	num_ch = m2->getObjectPtr()->get_size(3);
 	
 	int maskProcedure=maskflag.value();
-	int c;	
+	int ch;	
 
 
 	boost::shared_ptr< std::vector<size_t> > dims = m2->getObjectPtr()->get_dimensions();
@@ -63,11 +69,11 @@ int GetMaskGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 	std::complex<float>* complex_data_ptr = m2->getObjectPtr()->get_data_ptr();
 	
 	
-	#pragma omp parallel for private(c)
-	for(c = 0; c<cres; c++)
+	#pragma omp parallel for private(ch)
+	for(ch = 0; ch<num_ch; ch++)
 	{
 		float thr;
-		int ch_offset= xres*yres*c;
+		int ch_offset= xres*yres*ch;
 		float** filter_mag;
 		int sum=0;
 		int *ch_sppt_mask=supportmasks->getObjectPtr()->get_data_ptr()+ch_offset;

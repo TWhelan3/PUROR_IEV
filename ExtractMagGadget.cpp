@@ -8,7 +8,7 @@ using namespace Gadgetron;
 
 int ExtractMagGadget::process_config(ACE_Message_Block* mb)
 {	
-this->msg_queue()->high_water_mark(128);//This helps with memory. It's not a hard limit though. 
+//this->msg_queue()->high_water_mark(128);//This helps with memory. It's not a hard limit though. 
 
 return GADGET_OK;
 }
@@ -23,7 +23,7 @@ int ExtractMagGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 	GadgetContainerMessage< hoNDArray< std::complex<float> > >* m2 = AsContainerMessage< hoNDArray< std::complex<float> > > (m1->cont());
 	
 	if(!m2){
-		GERROR("Complex image array expected and not found.");
+		GERROR("Complex image array expected and not found.\n");
 		
 		return GADGET_FAIL;
 	}
@@ -50,7 +50,7 @@ int ExtractMagGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 	boost::shared_ptr< std::vector<size_t> > dims = m2->getObjectPtr()->get_dimensions();
 	try{mag->create(dims.get());}
 	catch (std::runtime_error &err){
-		GEXCEPTION(err,"Unable to allocate array in ExtractMag Gadget");
+		GEXCEPTION(err,"Unable to allocate array in ExtractMag Gadget.\n");
 		return GADGET_FAIL;
 	}
 

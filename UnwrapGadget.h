@@ -16,8 +16,9 @@ public Gadget1<ISMRMRD::ImageHeader>
       
      	virtual int process_config(ACE_Message_Block*);
 	virtual int process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1);
-	int xres, yres;
-	int  cres;
+	int xres;
+	int yres;
+	int num_ch;
 	
 	float q_th; //might want to set this is config
 
