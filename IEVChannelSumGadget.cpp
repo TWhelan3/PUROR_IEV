@@ -24,8 +24,7 @@ int IEVChannelSumGadget::process_config(ACE_Message_Block* mb)
 
 	freq_ptr=new float[xres*yres*num_ch*numEchos];
 		
-	if(output.value()==int(OUTPUT::PHASE))
-		unfiltered_phase_ptr=new float[xres*yres*num_ch*numEchos];
+	unfiltered_phase_ptr=new float[xres*yres*num_ch*numEchos];
 
 	hdr_ptr=new ISMRMRD::ImageHeader[numEchos];
 
@@ -39,10 +38,7 @@ int IEVChannelSumGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* 
 {
 	GadgetContainerMessage<hoNDArray< float > > *filtered_unwrapped_msg_ptr =     AsContainerMessage<hoNDArray<float>>(m1->cont());
 
-	GadgetContainerMessage<hoNDArray< float > > *unfiltered_unwrapped_msg_ptr =     AsContainerMessage<hoNDArray<float>>(m1->cont());//to allow check to work if output is LFS
-
-	if(output.value()==int(OUTPUT::PHASE))
-		unfiltered_unwrapped_msg_ptr = AsContainerMessage<hoNDArray<float>>(filtered_unwrapped_msg_ptr->cont());
+	GadgetContainerMessage<hoNDArray< float > > *unfiltered_unwrapped_msg_ptr =   AsContainerMessage<hoNDArray<float>>(filtered_unwrapped_msg_ptr->cont());
 	static int c=0;	
 	int e;
 	int image_series_index = m1->getObjectPtr()->image_series_index;
@@ -53,14 +49,6 @@ int IEVChannelSumGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* 
 		GERROR("Wrong types received in IEVChannelSumGadget\n");
 		return GADGET_FAIL;
 	}
-	/*if(echo==0)
-	{
-		//create arrays to hold data from next slice of messages
-		freq_ptr=new float[xres*yres*num_ch*numEchos];
-			
-		if(output.value()==int(OUTPUT::PHASE))
-			unfiltered_phase_ptr=new float[xres*yres*num_ch*numEchos];
-	}*/
 
 	
 	float* filtered_phase_ptr= filtered_unwrapped_msg_ptr->getObjectPtr()->get_data_ptr();
@@ -68,8 +56,7 @@ int IEVChannelSumGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* 
 	m1->getObjectPtr()->channels=1; //yes?
 	inv_echo_time=1/echoTimes[echo];//to avoid millions of divisions per slice
 
-	if(output.value()==int(OUTPUT::PHASE))
-		memcpy(unfiltered_phase_ptr+yres*xres*num_ch*echo, unfiltered_unwrapped_msg_ptr->getObjectPtr()->get_data_ptr(), xres*yres*num_ch*sizeof(float));
+	memcpy(unfiltered_phase_ptr+yres*xres*num_ch*echo, unfiltered_unwrapped_msg_ptr->getObjectPtr()->get_data_ptr(), xres*yres*num_ch*sizeof(float));
 	
 	for (int i = 0; i < xres*yres*num_ch; i++) 
 		freq_ptr[echo*xres*yres*num_ch+i] = filtered_phase_ptr[i]*inv_echo_time;
@@ -77,8 +64,6 @@ int IEVChannelSumGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* 
 	hdr_ptr[echo]=*(m1->getObjectPtr());
 	
 	 
-	//need to save header (or possibly just the index, (contrast etc can come from that)) before deleting if all echos are required
-	//acquisition time stamp seems important too, does meta data change?
 	filtered_unwrapped_msg_ptr->release();
 	if(echo==(numEchos-1))
 	{	
@@ -88,7 +73,7 @@ int IEVChannelSumGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* 
 		float* to_normalize = new float[xres*yres];
 		int ch;
 		
-		if(iev.value()==int(IEV::YES))
+		if(iev.value()==int(IEV::YES))//just to allow this to work without IEV/make it very easy to compare
 		{
 			#pragma omp parallel //expanded parallel --- to allow sample to be allocated once
 			{

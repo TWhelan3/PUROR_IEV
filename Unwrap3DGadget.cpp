@@ -15,6 +15,10 @@ int Unwrap3DGadget::process_config(ACE_Message_Block* mb)
 	this->msg_queue()->high_water_mark(128);//This helps with memory. It's not a hard limit though. 
 	ISMRMRD::IsmrmrdHeader hdr;
         ISMRMRD::deserialize(mb->rd_ptr(),hdr);
+
+	std::string id = "MxDoe";
+
+	
 	num_echos=hdr.encoding[0].encodingLimits.contrast().maximum +1; //number of echos is one more than highest numbers (0-based)
 	num_slices=hdr.encoding[0].reconSpace.matrixSize.z; //number of slices (will this always work?)
 
@@ -22,8 +26,24 @@ int Unwrap3DGadget::process_config(ACE_Message_Block* mb)
 	yres=hdr.encoding[0].reconSpace.matrixSize.x; //match my (and MATLABs) unfortunate convention 
 	xres=hdr.encoding[0].reconSpace.matrixSize.y;
 
+	if(hdr.subjectInformation.is_present())
+	{
+		struct ISMRMRD::SubjectInformation sInfo=hdr.subjectInformation.get();
+		if(sInfo.patientName.is_present())
+			id= sInfo.patientName.get();//assuming this field is acutally a pseudoanonymous id
+	}
+
+	std::cout<<"PATIENT ID:" << id <<std::endl;
+	if(savephase.value()==1)
+	{
+		dsToWrite = new ISMRMRD::Dataset((id+filename.value()+".ismrmrd").c_str(),"images", true);
+	}
+
+
+
+
 	//This is an optional part of the header and not sure if it will always be appropriate. # channels in acquisition may not be # channels in image gadget receives if they are already combined
-	//for now leacing cres (actual image channels) separate
+	//for now leaving cres (actual image channels) separate
 	num_ch=hdr.acquisitionSystemInformation.get().receiverChannels();
 
 	ordering.resize(num_echos*num_slices);
@@ -58,7 +78,7 @@ int Unwrap3DGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 	GadgetContainerMessage<hoNDArray<int>> *masks_msg;
 	GadgetContainerMessage<ISMRMRD::MetaContainer> *meta;
 
-	if(!(m2 && supportmasks_msg)){//may not NEED support mask.
+	if(!(m2 && supportmasks_msg)){//may not NEED support mask. only if 3D unwrapping is requested
 
 		GERROR("Image and/or support mask missing from message.\n");
 		return GADGET_FAIL;
@@ -98,11 +118,11 @@ int Unwrap3DGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 		meta = AsContainerMessage<ISMRMRD::MetaContainer>(supportmasks_msg->cont()->cont());
 	}
 	////////////////
-	/*for(ch=0; ch<cres; ch++)
+	for(ch=0; ch<cres; ch++)
 	{
 		tmp_mean=0;
-		k=0;
-		for(ii=xres*yres*ch; ii < xres*yres*(ch+1); ii++)
+		int k=0;
+		for(int ii=xres*yres*ch; ii < xres*yres*(ch+1); ii++)
 		{
 				if(supportmasks[ii]==1)
 				{
@@ -114,7 +134,7 @@ int Unwrap3DGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 		
 		}
 		tmp_mean/=k;
-		for(ii=xres*yres*ch; ii < xres*yres*(ch+1); ii++)
+		for(int ii=xres*yres*ch; ii < xres*yres*(ch+1); ii++)
 		{
 		
 				if(fullsignal || masks[ii]==1)//should shortcircuit with fullsignal (i.e. not try to check mask)
@@ -122,11 +142,10 @@ int Unwrap3DGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 		
 		}
 
-		slice_mean[header->contrast][ch][header->image_series_index%num_slices]=tmp_mean;
-	}*/
+		slice_mean[header->contrast][ch][header->image_series_index%num_slices]=tmp_mean; //will this always work?
+	}
 	//////////////
 	image.setHead(*(header));
-	/////
 	im_ptr=image.getDataPtr();
 	memcpy(im_ptr, unwrapped_x, image.getDataSize());
 	
@@ -142,7 +161,7 @@ int Unwrap3DGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
       image.setAttributeString(attributes.str());
 	static int myplace=0;
 
-	ordering[header->image_index-1]=myplace++;
+	ordering[header->image_index-1]=myplace++;//is this the appropriate thing to be ordering by? Would position be better?
 	temp_storage->appendImage("here", image);
 
 	m1->release();
@@ -159,32 +178,35 @@ int Unwrap3DGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 		float* im_pointer, *data_ptr;
 
 		t1 = std::chrono::high_resolution_clock::now();
+
+		int start=v==0?0:VolumeEnds[v-1];
+		
+		int end =VolumeEnds[v];
+
 		//parallelize this
 		//for outlerloop is echos or channels better?
-		/*for(e=0; e<num_echos; e++)
+		for(e=0; e<num_echos; e++)
 		for(ch=0;ch<cres;ch++)
 		{
-			slice_mean_original=slice_mean[e][ch];
-			unwrap(slice_mean[e][ch].data(), num_slices);
-			tmp_mean=slice_mean[e][ch][num_slices/2-1];
-			for(int sl=0; sl<num_slices; sl++)//number of slices
+			slice_mean_original=std::vector<float>(slice_mean[e][ch].begin()+start, slice_mean[e][ch].begin()+end);//end-1?
+			unwrap(slice_mean[e][ch].data()+start, end-start);
+			tmp_mean=slice_mean[e][ch][start+(end-start)/2-1];
+			for(int sl=start; sl<end; sl++)//number of slices
 			{
 				slice_mean[e][ch][sl]-=PI2*round(tmp_mean/PI2);
-				if(fabs(slice_mean_original[sl]-slice_mean[e][ch][sl])>PI)
-					offset[e][ch][sl]=slice_mean[e][ch][sl]-slice_mean_original[sl];
+				if(fabs(slice_mean_original[sl-start]-slice_mean[e][ch][sl])>PI)
+					offset[e][ch][sl]=slice_mean[e][ch][sl]-slice_mean_original[sl-start];
 				else
 					offset[e][ch][sl]=0;
 			}
-		}*/
+		}
 		/////////////////////////////
  		//if images are highpass filtered, don't think this helps
 		///////////////////
 
 	
 	
-		int start=v==0?0:VolumeEnds[v-1];
-		
-		int end =VolumeEnds[v];
+	
 			
 		for(int i=start; i<end; i++)//number of slices
 		{
@@ -202,29 +224,30 @@ int Unwrap3DGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 				  header = mheader->getObjectPtr();
 				 *header = image.getHead();
 				 
-				header->data_type = ISMRMRD::ISMRMRD_FLOAT;//GADGET_IMAGE_REAL_FLOAT;
-				header->image_type = ISMRMRD::ISMRMRD_IMTYPE_PHASE;
-
 				GadgetContainerMessage< hoNDArray<float> > *data = new GadgetContainerMessage< hoNDArray<float> >();
 				
 				data->getObjectPtr()->create(header->matrix_size[0], header->matrix_size[1],header->matrix_size[2], header->channels);
 								
 				data_ptr=data->getObjectPtr()->get_data_ptr();
 				
-				memcpy(data_ptr, image.getDataPtr(), image.getDataSize()); //copy image 
 				im_pointer=image.getDataPtr();
 
-				//////don't forget to readd the memcpy
-				/*for(ch=0; ch<cres; ch++)
-				{
+				////
+				for(ch=0; ch<cres; ch++)//if 3D unwrapping is unnecessary this is a waste (as are the rest of the u3D specific parts)
+				{			//this gadget is mostly intended to reorder slices that are out of order from threading or interleaved scans(?)
+							//maybe there is a better way to brek up the two ideas
 					for (int p = xres*yres*ch; p < xres*yres*(ch+1); p++) 
 					{
-					//GDEBUG("%d %d %d %d\n",p,j, ch, i);
-					data_ptr[p] = im_pointer[p]+offset[j][ch][i];
+						//GDEBUG("%d %d %d %d\n",p,j, ch, i);
+						im_pointer[p]+=offset[j][ch][i];
+						
 					}
-				}*/
-				/////
+				}
+				///
+				memcpy(data->getObjectPtr()->get_data_ptr(), image.getDataPtr(), image.getDataSize());
 				std::string attributes2;
+
+
 				image.getAttributeString(attributes2);
 				 if (header->attribute_string_len > 0 && !attributes2.empty()) {
 				    GadgetContainerMessage<ISMRMRD::MetaContainer> *meta = new GadgetContainerMessage<ISMRMRD::MetaContainer>();
@@ -239,6 +262,14 @@ int Unwrap3DGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 				    data->cont(meta);
 				 }
 				 mheader->cont(data);
+
+
+				if(savephase.value()==1 && do3D.value()==1)//otherwise this is available in the temp file (or 2D unwrap)				
+				{
+					dsToWrite->appendImage("3DMultiChannelUnwrappedPhase", image);
+				}
+
+
 				 
 				 // Send the image along the chain
 				//while(this->msg_queue()->message_count()>1){}

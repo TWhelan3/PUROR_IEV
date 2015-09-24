@@ -12,9 +12,25 @@ int UnwrapGadget::process_config(ACE_Message_Block* mb)
 	this->msg_queue()->high_water_mark(128);//This helps with memory. It's not a hard limit though. 
 	ISMRMRD::IsmrmrdHeader hdr;
         ISMRMRD::deserialize(mb->rd_ptr(),hdr);
+
+	std::string id = "MxDoe";
+
 	yres=hdr.encoding[0].reconSpace.matrixSize.x; //match my (and MATLABs) unfortunate convention 
 	xres=hdr.encoding[0].reconSpace.matrixSize.y;
 
+	if(hdr.subjectInformation.is_present())
+	{
+		struct ISMRMRD::SubjectInformation sInfo=hdr.subjectInformation.get();
+		if(sInfo.patientName.is_present())
+			id= sInfo.patientName.get();//assuming this field is acutally a pseudoanonymous id
+	}
+
+	std::cout<<"PATIENT ID:" << id <<std::endl;
+	if(savephase.value()==1)
+	{
+		dsToWrite = new ISMRMRD::Dataset((id+filename.value()+".ismrmrd").c_str(),"images", true);
+	}
+	
 	return GADGET_OK;
 }
 int UnwrapGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
@@ -25,6 +41,7 @@ int UnwrapGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 	 GadgetContainerMessage<hoNDArray<int>> *supportmask_msg = AsContainerMessage<hoNDArray<int>>(m2->cont());
 	GadgetContainerMessage<hoNDArray<int>> *mask_msg;
 	GadgetContainerMessage<ISMRMRD::MetaContainer> *meta;
+
 	if (!(m2 && supportmask_msg)) {
 	GDEBUG("Wrong datatypes coming in! Gadget requires header, complex array and mask data\n");
 	return GADGET_FAIL;
@@ -188,11 +205,31 @@ int UnwrapGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 		supportmask_msg->getObjectPtr()->get_data_ptr()[0]-=2;
 	}
 
+
+	if(savephase.value()==1)
+	{
+		ISMRMRD::Image<float> image;
+			
+		image.setHead(*(new_header_msg->getObjectPtr()));
+		
+		memcpy(image.getDataPtr(), phase_x_block->get_data_ptr(), image.getDataSize());
+		std::stringstream attributes;
+      
+	     	if (meta) {
+		ISMRMRD::serialize(*meta->getObjectPtr(), attributes);
+	
+	     	}
+	 	image.setAttributeString(attributes.str());
+
+	 	dsToWrite->appendImage("2DMultiChannelUnwrappedPhase", image);
+	}
+
 	if (this->next()->putq(new_header_msg) == -1) {
 		new_header_msg->release();
 		GERROR("Unable to put images on next gadgets queue\n");
 		return GADGET_FAIL;
 	}
+
 	
 	if(myid%24==0)//debugging value, shows approximately how long to do four sets of six echos
 	GINFO("Unwrapped %d \n",new_header_msg->getObjectPtr()->image_index);

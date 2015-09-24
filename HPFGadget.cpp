@@ -28,18 +28,6 @@ int HPFGadget::process_config(ACE_Message_Block* mb)
 	y2.resize(xres);
 
 
-	//Should look for a more general way, but this keeps it safe in my chains at least
-	Gadget* g=this->get_controller()->find_gadget("IEVChannelSum");
-
-	if(!g)
-		g=this->get_controller()->find_gadget("Accumulator");
-
-	if(g && strcmp(g->find_property("output")->string_value(),"1")==0)//does a later gadget need phase?
-	{
-		GINFO("A later gadget needs phase. Output property being overridden.\n");
-		output.value(1);
-	}
-
 	for(int i=0; i<yres; i++)
 		x2[i]=pow((i-yres/2)*FOVx/yres,2);
 
@@ -64,9 +52,9 @@ int HPFGadget::process_config(ACE_Message_Block* mb)
 }
 int HPFGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 {
-	GadgetContainerMessage<hoNDArray<float > > *m2 =AsContainerMessage<hoNDArray<float >> (m1->cont());
+	GadgetContainerMessage<hoNDArray<float > > *unfiltered_phase_msg =AsContainerMessage<hoNDArray<float >> (m1->cont());
 
-	if(!m2){
+	if(!unfiltered_phase_msg){
 		GERROR("Phase array (float/single) expected and not found.\n");
 		
 		return GADGET_FAIL;
@@ -75,27 +63,26 @@ int HPFGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 	ISMRMRD::ImageHeader *header=m1->getObjectPtr();
 
 	int cres = header->channels;
-	float *pixel = m2->getObjectPtr()->get_data_ptr();
+	float *pixel = unfiltered_phase_msg->getObjectPtr()->get_data_ptr();
 	float* im_ptr;
 	
 	GadgetContainerMessage<hoNDArray< float > > *filtered_phase_msg;
 	boost::shared_ptr< std::vector<size_t> > dims; 
 	float *filtered_image;
-	if(output.value()==int(OUTPUT::PHASE))
-	{
-		filtered_phase_msg = new GadgetContainerMessage<hoNDArray< float > >();
-		dims = m2->getObjectPtr()->get_dimensions();
+	
+	filtered_phase_msg = new GadgetContainerMessage<hoNDArray< float > >();
+	dims = unfiltered_phase_msg->getObjectPtr()->get_dimensions();
 		
 
-		try{filtered_phase_msg->getObjectPtr()->create(dims.get());}
-		catch (std::runtime_error &err){
-			GEXCEPTION(err,"Unable to create itohx in Unwrap Gadget");
-			return GADGET_FAIL;
-		}
-
-
-		filtered_image = filtered_phase_msg->getObjectPtr()->get_data_ptr();
+	try{filtered_phase_msg->getObjectPtr()->create(dims.get());}
+	catch (std::runtime_error &err){
+		GEXCEPTION(err,"Unable to create filtered image in Highpass Filter Gadget");
+		return GADGET_FAIL;
 	}
+
+
+	filtered_image = filtered_phase_msg->getObjectPtr()->get_data_ptr();
+	
 	int ch;
 	#pragma omp parallel for private(ch)	
 	for(ch=0; ch<cres; ch++)
@@ -132,30 +119,20 @@ int HPFGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 		hoNDFFT<float>::instance()->ifft(slicedata,0);
 		hoNDFFT<float>::instance()->fftshift2D(*slicedata);
 		
-		if(output.value()==int(OUTPUT::PHASE))
+		for (int p =0; p < xres*yres; p++) 
 		{
-			for (int p =0; p < xres*yres; p++) 
-			{
-				filtered_image[xres*yres*ch+p] = -pixel[xres*yres*ch+p] + slicedata_ptr[p].real(); //take out low freq signal, apply diagmagnetic convention
-			}
+			filtered_image[xres*yres*ch+p] = -pixel[xres*yres*ch+p] + slicedata_ptr[p].real(); //take out low freq signal, apply diagmagnetic convention
 		}
-		else
-		{
-			for (int p =0; p < xres*yres; p++) 
-			{
-				pixel[xres*yres*ch+p] = -pixel[xres*yres*ch+p] + slicedata_ptr[p].real(); //take out low freq signal, apply diagmagnetic convention
-			}
-		}
+		
+			
 		delete slicedata;
 
 	}	
 
 	
-	if(output.value()==int(OUTPUT::PHASE))
-	{
-	filtered_phase_msg->cont(m2->cont());
-	m2->cont(filtered_phase_msg);
-	}
+	filtered_phase_msg->cont(unfiltered_phase_msg->cont());
+	unfiltered_phase_msg->cont(filtered_phase_msg);
+	
 	if (this->next()->putq(m1) == -1) {
 		m1->release();
 		GERROR("Unable to pass on filtered image.\n");

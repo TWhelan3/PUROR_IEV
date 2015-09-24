@@ -16,6 +16,11 @@ public Gadget1<ISMRMRD::ImageHeader>
       
      	virtual int process_config(ACE_Message_Block*);
 	virtual int process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1);
+	GADGET_PROPERTY(filename, std::string, "Name of ISMRMRD Dataset file", "output");
+	GADGET_PROPERTY(savephase, int, "Save Before Passing On", 0);
+	ISMRMRD::Dataset* dsToWrite;
+
+
 	int xres;
 	int yres;
 	int num_ch;

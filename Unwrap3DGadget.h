@@ -15,6 +15,11 @@ public Gadget1<ISMRMRD::ImageHeader>
       
      	virtual int process_config(ACE_Message_Block*);
 	virtual int process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1);
+	GADGET_PROPERTY(filename, std::string, "Name of ISMRMRD Dataset file", "output");
+	GADGET_PROPERTY(savephase, int, "Save Before Passing On", 0);
+	ISMRMRD::Dataset* dsToWrite;
+
+
 	int yres;
 	int xres;
 	int cres;
@@ -28,6 +33,7 @@ public Gadget1<ISMRMRD::ImageHeader>
 	std::vector<std::vector<std::vector<float>>> slice_mean;
 	GADGET_PROPERTY(limits, std::string, "Ends of Volumes", "");
 	GADGET_PROPERTY(numVol, int, "Number of Volumes", 1);
+	GADGET_PROPERTY(do3D, int, "Unwrap Volumes Slicewise", 1); 
 
 	float FOVx;
 	float FOVy;
