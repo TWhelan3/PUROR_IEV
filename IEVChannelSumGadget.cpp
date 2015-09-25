@@ -1,7 +1,7 @@
 //Unwrap3DGadget.cpp
 //Written by Tim Whelan 2015
 //Input ImageHeader->Float 3D Array (Phase Data) -> // Int 3D Array (Support Mask) -> [Int 3D Array (Support Mask)] -> [MetaContainer]
-//Output ImageHeader->Float 3D Array (LFS Data) -> // Int 3D Array (Support Mask) -> [Int 3D Array (Support Mask)] -> [MetaContainer]
+//Output ImageHeader->Float 3D Array (Filtered Phase Data) -> Float 3D Array (Unfiltered Phase Data) -> [MetaContainer] 
 
 #include "IEVChannelSumGadget.h"
 
@@ -27,6 +27,8 @@ int IEVChannelSumGadget::process_config(ACE_Message_Block* mb)
 	unfiltered_phase_ptr=new float[xres*yres*num_ch*numEchos];
 
 	hdr_ptr=new ISMRMRD::ImageHeader[numEchos];
+	
+	attributes=new ISMRMRD::MetaContainer[numEchos];
 
 
 	//create arrays (hdr_ptr, freq_ptr, unfltrd_phase_ptr)
@@ -39,6 +41,8 @@ int IEVChannelSumGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* 
 	GadgetContainerMessage<hoNDArray< float > > *filtered_unwrapped_msg_ptr =     AsContainerMessage<hoNDArray<float>>(m1->cont());
 
 	GadgetContainerMessage<hoNDArray< float > > *unfiltered_unwrapped_msg_ptr =   AsContainerMessage<hoNDArray<float>>(filtered_unwrapped_msg_ptr->cont());
+
+	GadgetContainerMessage<ISMRMRD::MetaContainer> *meta = AsContainerMessage<ISMRMRD::MetaContainer>(unfiltered_unwrapped_msg_ptr->cont());
 	static int c=0;	
 	int e;
 	int image_series_index = m1->getObjectPtr()->image_series_index;
@@ -63,6 +67,8 @@ int IEVChannelSumGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* 
 
 	hdr_ptr[echo]=*(m1->getObjectPtr());
 	
+	if(meta)
+	attributes[echo]=*(meta->getObjectPtr());
 	 
 	filtered_unwrapped_msg_ptr->release();
 	if(echo==(numEchos-1))
@@ -183,7 +189,9 @@ int IEVChannelSumGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* 
 				for (int i = 1; i < xres*yres; i++)
 				output_ptr[i]+=unfiltered_phase_ptr[e*xres*yres*num_ch+xres*yres*ch+i]*channel_weights[ch][i];; //instead of setting to 0 and adding first channel
 			
-			}				
+			}
+			if(meta)
+				outimage->cont(new GadgetContainerMessage<ISMRMRD::MetaContainer>(attributes[e]));				
 
 			if (this->next()->putq(h1) == -1) {
 			m1->release();

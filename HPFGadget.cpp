@@ -1,7 +1,7 @@
 //HPFGadget.cpp
 //Written by Tim Whelan 2015
-//Input ImageHeader->Float 3D Array (Phase Data) -> //
-//Output ImageHeader->Float 3D Array (Phase Data) -> //
+//Input ImageHeader->Float 3D Array (Phase Data) -> [MetaContainer]//
+//Output ImageHeader->Float 3D Array (Filtered Phase Data) -> Float 3D Array (Unfiltered Phase Data) -> [MetaContainer] //
 
 #include "HPFGadget.h"
 

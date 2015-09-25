@@ -1,7 +1,7 @@
 //Unwrap3DGadget.cpp
 //Written by Tim Whelan 2015
 //Input ImageHeader->Float 3D Array (Phase Data) -> // Int 3D Array (Support Mask) -> [Int 3D Array (Support Mask)] -> [MetaContainer]
-//Output ImageHeader->Float 3D Array (Phase Data) -> // Int 3D Array (Support Mask) -> [Int 3D Array (Support Mask)] -> [MetaContainer]
+//Output ImageHeader->Float 3D Array (Phase Data)-> [MetaContainer]
 
 
 #include "Unwrap3DGadget.h"

@@ -34,6 +34,7 @@ public Gadget1<ISMRMRD::ImageHeader>
 	float* freq_ptr;
 	float* unfiltered_phase_ptr;
 	ISMRMRD::ImageHeader* hdr_ptr;
+	ISMRMRD::MetaContainer* attributes;
 	
 
 	//add array for pixels and headers

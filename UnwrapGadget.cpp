@@ -1,7 +1,7 @@
 //UnwrapGadget.cpp
 //Written by Tim Whelan 2015
 //Input ImageHeader->Float 3D Array (Phase Data) -> Int 3D Array (Support Mask) -> [Int 3D Array (Support Mask)] -> [MetaContainer]
-//Output ImageHeader->Float 3D Array (Phase Data) -> Int 3D Array (Support Mask) -> [Int 3D Array (Support Mask)] -> [MetaContainer]
+//Output ImageHeader->Float 3D Array (Phase Data) -> Int 3D Array (Support Mask) -> [MetaContainer]
 #include "UnwrapGadget.h"
 
 namespace Gadgetron{
@@ -199,6 +199,8 @@ int UnwrapGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 	new_header_msg->cont(new_image_msg);
 
 	new_image_msg->cont(supportmask_msg);
+	if(meta)
+	supportmask_msg->cont(meta);
 
 	if(fullsignal)
 	{
@@ -217,6 +219,7 @@ int UnwrapGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
       
 	     	if (meta) {
 		ISMRMRD::serialize(*meta->getObjectPtr(), attributes);
+		
 	
 	     	}
 	 	image.setAttributeString(attributes.str());

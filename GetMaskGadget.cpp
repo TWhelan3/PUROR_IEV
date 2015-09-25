@@ -32,6 +32,7 @@ int GetMaskGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 		
 		return GADGET_FAIL;
 	}
+	
 	//yres = m2->getObjectPtr()->get_size(0);
 	//xres = m2->getObjectPtr()->get_size(1);
 	num_ch = m2->getObjectPtr()->get_size(3);
