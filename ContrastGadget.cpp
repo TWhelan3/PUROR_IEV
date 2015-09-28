@@ -70,12 +70,12 @@ int ContrastGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 		h1->getObjectPtr()->image_series_index=numEchos;
 
 		if(meta)
-			outimage->cont(meta);
+			outimage->cont(meta->clone());
 		
 
 		if (this->next()->putq(h1) == -1) {
 		m1->release();
-		GERROR("Unable to put collapsed images on next gadgets queue.\n");
+		GERROR("Unable to put collapsed images on next gadget's queue.\n");
 		return GADGET_FAIL;
 		}
 	}

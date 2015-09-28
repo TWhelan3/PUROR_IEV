@@ -37,7 +37,7 @@ int main(int argc, char *argv[]){//take the filename as an argument
 	ss.str("");
 	ss<<i;
 	id.clear();
-	id+="<?xml version=\"1.0\"?> <ismrmrdMeta><meta><name>parameter1</name><value>";
+	id+="<?xml version=\"1.0\"?> <ismrmrdMeta><meta><name>GADGETRON_ImageNumber</name><value>";
 	id+=ss.str();
 	id+="</value></meta></ismrmrdMeta>";
 	image.setAttributeString(id);

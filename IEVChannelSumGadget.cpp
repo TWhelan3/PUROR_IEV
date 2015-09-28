@@ -194,7 +194,7 @@ int IEVChannelSumGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* 
 				outimage->cont(new GadgetContainerMessage<ISMRMRD::MetaContainer>(attributes[e]));				
 
 			if (this->next()->putq(h1) == -1) {
-			m1->release();
+			//m1->release();
 				GERROR("Unable to put collapsed images on next gadget's queue\n");
 			return GADGET_FAIL; 
 			}
