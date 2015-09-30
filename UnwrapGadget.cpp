@@ -196,8 +196,8 @@ int UnwrapGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 
 	delete phase_y_block;
 	//need to deal with meta
-	new_header_msg->cont(new_image_msg);
 
+	new_header_msg->cont(new_image_msg);
 	new_image_msg->cont(supportmask_msg);
 	if(meta)
 	supportmask_msg->cont(meta);
