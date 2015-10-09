@@ -41,8 +41,9 @@ int IEVChannelSumGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* 
 	GadgetContainerMessage<hoNDArray< float > > *filtered_unwrapped_msg_ptr =     AsContainerMessage<hoNDArray<float>>(m1->cont());
 
 	GadgetContainerMessage<hoNDArray< float > > *unfiltered_unwrapped_msg_ptr =   AsContainerMessage<hoNDArray<float>>(filtered_unwrapped_msg_ptr->cont());
-
-	GadgetContainerMessage<ISMRMRD::MetaContainer> *meta = AsContainerMessage<ISMRMRD::MetaContainer>(unfiltered_unwrapped_msg_ptr->cont());
+	GadgetContainerMessage<ISMRMRD::MetaContainer> *meta;
+	if(unfiltered_unwrapped_msg_ptr)
+	 meta = AsContainerMessage<ISMRMRD::MetaContainer>(unfiltered_unwrapped_msg_ptr->cont());
 	static int c=0;	
 	int e;
 	int image_series_index = m1->getObjectPtr()->image_series_index;
@@ -165,7 +166,7 @@ int IEVChannelSumGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* 
 			h1->getObjectPtr()->contrast=e;
 			h1->getObjectPtr()->data_type = ISMRMRD::ISMRMRD_FLOAT;//GADGET_IMAGE_REAL_FLOAT;
 			h1->getObjectPtr()->image_type = ISMRMRD::ISMRMRD_IMTYPE_PHASE;
-			h1->getObjectPtr()->image_index = (h1->getObjectPtr()->image_index-1) % num_slices;//+e*num_slices;//not right, but distinguishes for now
+			h1->getObjectPtr()->image_index = (h1->getObjectPtr()->image_index-1) % num_slices;//+e*num_slices;
 			h1->getObjectPtr()->image_series_index = e;//h1->getObjectPtr()->image_series_index % num_slices+e*num_slices;//not right, but distinguishes for now
 			h1->cont(outimage);
 
