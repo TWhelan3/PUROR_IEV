@@ -34,7 +34,7 @@ return GADGET_OK;
 
 int SWIGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 {
-
+	//skeleton code. Missing a lot of things, wanted to get the file i/o and control flow figured out 
     	//std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
       
 	GadgetContainerMessage< hoNDArray< float > >* m2 = AsContainerMessage< hoNDArray< float > > (m1->cont());
