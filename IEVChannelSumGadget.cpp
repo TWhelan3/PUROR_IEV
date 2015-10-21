@@ -166,8 +166,8 @@ int IEVChannelSumGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* 
 			h1->getObjectPtr()->contrast=e;
 			h1->getObjectPtr()->data_type = ISMRMRD::ISMRMRD_FLOAT;//GADGET_IMAGE_REAL_FLOAT;
 			h1->getObjectPtr()->image_type = ISMRMRD::ISMRMRD_IMTYPE_PHASE;
-			h1->getObjectPtr()->image_index = (h1->getObjectPtr()->image_index-1) % num_slices;//+e*num_slices;
-			h1->getObjectPtr()->image_series_index = e;//h1->getObjectPtr()->image_series_index % num_slices+e*num_slices;//not right, but distinguishes for now
+			h1->getObjectPtr()->slice= (h1->getObjectPtr()->image_index-1) % num_slices;//+e*num_slices;
+			h1->getObjectPtr()->image_series_index = e;
 			h1->cont(outimage);
 
 			if(output.value()==int(OUTPUT::LFS))

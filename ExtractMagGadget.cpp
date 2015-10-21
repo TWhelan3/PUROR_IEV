@@ -47,7 +47,7 @@ int ExtractMagGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 	hoNDArray< float > *mag = cm2->getObjectPtr();
 
 	boost::shared_ptr< std::vector<size_t> > dims = m2->getObjectPtr()->get_dimensions();
-	try{mag->create(yres, xres);}
+	try{mag->create(xres, yres);}
 	catch (std::runtime_error &err){
 		GEXCEPTION(err,"Unable to allocate array in ExtractMag Gadget.\n");
 		return GADGET_FAIL;

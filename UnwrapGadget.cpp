@@ -186,7 +186,7 @@ int UnwrapGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 			final_compare(phase_x, phase_y, 6,md);
 		}
 		
-		diff_x(phase_x, fullsignal,md);
+		/*diff_x(phase_x, fullsignal,md);*/
 
 		delete md;
 

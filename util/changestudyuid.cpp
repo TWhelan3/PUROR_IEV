@@ -29,11 +29,11 @@ int main(int argc, char *argv[]){//take the filename as an argument
 	 ISMRMRD::StudyInformation study_info;
 	    study_info.studyDate.set("19000101");
             study_info.studyTime.set("170000");
-            study_info.studyID.set("largeteststudy");
+            study_info.studyID.set("smallteststudy");
             study_info.accessionNumber.set(0);
             study_info.referringPhysicianName.set("XXXXXXXX");
-            study_info.studyDescription.set("XXXXXXXX");
-            study_info.studyInstanceUID.set("1.2.826.0.1.3680043.9.5687.2");//2
+            study_info.studyDescription.set("Gadgetron^Gadgetron^SmallTest");
+            study_info.studyInstanceUID.set("1.2.826.0.1.3680043.9.5687.1");//.1 for small //.2 for large (those two test sets. use unique numbers in real life)
 
 	 hdr.studyInformation.set(study_info);
 
