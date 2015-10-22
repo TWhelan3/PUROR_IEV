@@ -116,8 +116,12 @@ int ContrastGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 		h1->getObjectPtr()->contrast=m1->getObjectPtr()->contrast+1;
 	
 		if(meta)
-			outimage->cont(meta->clone());
-		
+		{
+			GadgetContainerMessage<ISMRMRD::MetaContainer> *newmeta = new GadgetContainerMessage<ISMRMRD::MetaContainer>();
+			*(newmeta->getObjectPtr()) = *(meta->getObjectPtr());//actually copy instead of clone
+
+			outimage->cont(newmeta);
+		}		
 		
 		if (this->next()->putq(h1) == -1) {
 		m1->release();

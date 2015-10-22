@@ -20,7 +20,7 @@ public Gadget1<ISMRMRD::ImageHeader>
     protected:
        	virtual int process_config(ACE_Message_Block* mb);
 	virtual int process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1);
-	GADGET_PROPERTY(iev, int, "Weight channels by IEV?", 1); 
+	GADGET_PROPERTY(iev, int, "Weight channels by IEV?", 0); 
 	GADGET_PROPERTY(output, int, "What to output?",1); //0=LFS 1=Phase
 	
 	void medianFilter(float* src_array, int xres, int yres);//should be able to do this without passing yres/xres, but it causes a segfault

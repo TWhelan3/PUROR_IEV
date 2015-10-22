@@ -59,6 +59,10 @@ int HPFGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 		
 		return GADGET_FAIL;
 	}
+
+	GadgetContainerMessage<ISMRMRD::MetaContainer> *meta = AsContainerMessage<ISMRMRD::MetaContainer>(unfiltered_phase_msg->cont()->cont());
+
+
 	ISMRMRD::Image<float> image;
 	ISMRMRD::ImageHeader *header=m1->getObjectPtr();
 
@@ -128,9 +132,12 @@ int HPFGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 		delete slicedata;
 
 	}	
+	//assumes a lot about the chain
 
-	
-	filtered_phase_msg->cont(unfiltered_phase_msg->cont());
+	if(meta)
+	{
+		filtered_phase_msg->cont(meta);
+	}
 	unfiltered_phase_msg->cont(filtered_phase_msg);
 	
 	if (this->next()->putq(m1) == -1) {

@@ -72,6 +72,7 @@ int IEVChannelSumGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* 
 	
 	if(meta)
 	{
+		GINFO("I left my metadata in IEV!\n");
 		attributes[echo]=*(meta->getObjectPtr());
 	 }
 	filtered_unwrapped_msg_ptr->release();

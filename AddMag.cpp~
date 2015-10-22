@@ -51,7 +51,7 @@ int AddMag::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 
 
 	if(!m2){
-		GERROR("Float image array expected and not found.\n");
+		GERROR("Complex image array expected and not found.\n");
 		
 		return GADGET_FAIL;
 	}

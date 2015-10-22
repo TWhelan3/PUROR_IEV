@@ -25,7 +25,6 @@ int UnwrapGadget::process_config(ACE_Message_Block* mb)
 			id= sInfo.patientName.get();//assuming this field is acutally a pseudoanonymous id
 	}
 
-	std::cout<<"PATIENT ID:" << id <<std::endl;
 	if(savephase.value()==1)
 	{
 		dsToWrite = new ISMRMRD::Dataset((id+filename.value()+".ismrmrd").c_str(),"images", true);
@@ -186,7 +185,7 @@ int UnwrapGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 			final_compare(phase_x, phase_y, 6,md);
 		}
 		
-		/*diff_x(phase_x, fullsignal,md);*/
+		diff_x(phase_x, fullsignal,md);
 
 		delete md;
 
@@ -200,8 +199,12 @@ int UnwrapGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 	new_header_msg->cont(new_image_msg);
 	new_image_msg->cont(supportmask_msg);
 	if(meta)
-	supportmask_msg->cont(meta);
-
+	{
+		meta->getObjectPtr()->set(GADGETRON_DATA_ROLE, GADGETRON_IMAGE_PHASE);
+	        
+		supportmask_msg->cont(meta);
+				
+	}
 	if(fullsignal)
 	{
 		supportmask_msg->getObjectPtr()->get_data_ptr()[0]-=2;
@@ -219,9 +222,7 @@ int UnwrapGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
       
 	     	if (meta) {
 		ISMRMRD::serialize(*meta->getObjectPtr(), attributes);
-		
-	
-	     	}
+		 }
 	 	image.setAttributeString(attributes.str());
 
 	 	dsToWrite->appendImage("2DMultiChannelUnwrappedPhase", image);

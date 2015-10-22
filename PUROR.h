@@ -14,6 +14,7 @@
 #include "ismrmrd/dataset.h"
 #include "ismrmrd/xml.h"
 #include "mri_core_data.h"
+#include "mri_core_def.h"
 #include "omp.h"
 #include <chrono>
 
