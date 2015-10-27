@@ -513,7 +513,7 @@ float* filter(float* temp, int xres, int yres)//mean 2d filter returning 1d poin
 		a=temp[ii-1+yres*(xres-2)]+temp[ii+yres*(xres-2)]+temp[ii+1+yres*(xres-2)];
 		b=temp[ii-1+yres*(xres-1)]+temp[ii+yres*(xres-1)]+temp[ii+1+yres*(xres-1)];
 
-		data[ii+yres*jj]=(a+b+c)*.1111;//don't need to divide
+		data[ii+yres*jj]=(a+b)*.1111;//don't need to divide
 
 	}
 
