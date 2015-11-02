@@ -90,11 +90,13 @@ int UnwrapGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 		fullsignal=1;
 		*(supportmask_msg->getObjectPtr()->get_data_ptr())+=2;
 		meta=  AsContainerMessage<ISMRMRD::MetaContainer>(supportmask_msg->cont());
+		supportmask_msg->cont(NULL);//allow support mask to be released without losing meta
 	}
 	else
 	{
 		mask_msg = AsContainerMessage<hoNDArray<int>>(supportmask_msg->cont());
 		meta = AsContainerMessage<ISMRMRD::MetaContainer>(mask_msg->cont());
+		mask_msg->cont(NULL);//allow mask to be released without losing meta
 	}
 	#pragma omp parallel for private(channel_index)	
 	for(channel_index=0; channel_index<num_ch; channel_index++)
@@ -197,18 +199,21 @@ int UnwrapGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 	//need to deal with meta
 
 	new_header_msg->cont(new_image_msg);
-	new_image_msg->cont(supportmask_msg);
+	
+
+	//Support Mask would be used for 3D	
+	//new_image_msg->cont(supportmask_msg);
 	if(meta)
 	{
 		meta->getObjectPtr()->set(GADGETRON_DATA_ROLE, GADGETRON_IMAGE_PHASE);
 	        
-		supportmask_msg->cont(meta);
-				
+		//supportmask_msg->cont(meta);
+		new_image_msg->cont(meta);		
 	}
-	if(fullsignal)
-	{
-		supportmask_msg->getObjectPtr()->get_data_ptr()[0]-=2;
-	}
+	//if(fullsignal)
+	//{
+		//supportmask_msg->getObjectPtr()->get_data_ptr()[0]-=2;
+	//}
 
 
 	if(savephase.value()==1)
@@ -238,7 +243,7 @@ int UnwrapGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 	if(myid%24==0)//debugging value, shows approximately how long to do four sets of six echos
 	GINFO("Unwrapped %d \n",new_header_msg->getObjectPtr()->image_index);
 	++myid;
-	m2->cont(NULL);//necessary so masks don't get deleted and stay connected. Release removes links further down chain.
+	//m2->cont(NULL);//necessary so masks don't get deleted and stay connected. Release removes links further down chain. Uncomment for 3D
 	m1->release(); 
 	
 	return GADGET_OK;

@@ -13,7 +13,7 @@ int IEVChannelSumGadget::process_config(ACE_Message_Block* mb)
 	ISMRMRD::IsmrmrdHeader hdr;
         ISMRMRD::deserialize(mb->rd_ptr(),hdr);
 	numEchos=hdr.encoding[0].encodingLimits.contrast().maximum +1; //number of echos is one more than highest numbers (0-based)
-	//this->msg_queue()->high_water_mark(128);//This helps with memory. It's not a hard limit though. 
+	this->msg_queue()->high_water_mark(128);//This helps with memory. It's not a hard limit though. 
 	echoTimes=hdr.sequenceParameters.get().TE.get();//should be doing checks, structures are optional
 	num_slices=hdr.encoding[0].reconSpace.matrixSize.z; //number of slices (will this always work?)
 
@@ -30,19 +30,15 @@ int IEVChannelSumGadget::process_config(ACE_Message_Block* mb)
 	
 	attributes=new ISMRMRD::MetaContainer[numEchos];
 
-
-	//create arrays (hdr_ptr, freq_ptr, unfltrd_phase_ptr)
-
-
 	return GADGET_OK;
 }
 int IEVChannelSumGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 {
-	GadgetContainerMessage<hoNDArray< float > > *filtered_unwrapped_msg_ptr =     AsContainerMessage<hoNDArray<float>>(m1->cont());
+	GadgetContainerMessage<hoNDArray< float > > *unfiltered_unwrapped_msg_ptr =     AsContainerMessage<hoNDArray<float>>(m1->cont());
 
-	GadgetContainerMessage<hoNDArray< float > > *unfiltered_unwrapped_msg_ptr =   AsContainerMessage<hoNDArray<float>>(filtered_unwrapped_msg_ptr->cont());
+	GadgetContainerMessage<hoNDArray< float > > *filtered_unwrapped_msg_ptr =   AsContainerMessage<hoNDArray<float>>(unfiltered_unwrapped_msg_ptr->cont());
 	GadgetContainerMessage<ISMRMRD::MetaContainer> *meta;
-	if(unfiltered_unwrapped_msg_ptr)
+	if(filtered_unwrapped_msg_ptr)
 	{
 	 meta = AsContainerMessage<ISMRMRD::MetaContainer>(unfiltered_unwrapped_msg_ptr->cont());
 	}
@@ -53,7 +49,7 @@ int IEVChannelSumGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* 
 	float inv_echo_time;
 	if(!filtered_unwrapped_msg_ptr || !unfiltered_unwrapped_msg_ptr)
 	{
-		GERROR("Wrong types received in IEVChannelSumGadget\n");
+		GERROR("Wrong types received in IEVChannelSumGadget. Filtered and unfiltered phase expected.\n");
 		return GADGET_FAIL;
 	}
 
@@ -74,7 +70,7 @@ int IEVChannelSumGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* 
 	{
 		attributes[echo]=*(meta->getObjectPtr());
 	 }
-	filtered_unwrapped_msg_ptr->release();
+	unfiltered_unwrapped_msg_ptr->release();//all data has been copied
 	if(echo==(numEchos-1))
 	{	
 		
@@ -205,7 +201,6 @@ int IEVChannelSumGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* 
 			
 		}
 		delete[] to_normalize;
-		//delete[] freq_ptr;
 		delete[] weights;
 		delete[] channel_weights;
 		//if(output.value()==int(OUTPUT::PHASE))

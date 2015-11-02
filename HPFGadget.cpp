@@ -60,9 +60,8 @@ int HPFGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 		return GADGET_FAIL;
 	}
 
-	GadgetContainerMessage<ISMRMRD::MetaContainer> *meta = AsContainerMessage<ISMRMRD::MetaContainer>(unfiltered_phase_msg->cont()->cont());
-
-
+	//GadgetContainerMessage<ISMRMRD::MetaContainer> *meta = AsContainerMessage<ISMRMRD::MetaContainer>(unfiltered_phase_msg->cont()->cont());
+	GadgetContainerMessage<ISMRMRD::MetaContainer> *meta = AsContainerMessage<ISMRMRD::MetaContainer>(unfiltered_phase_msg->cont());
 	ISMRMRD::Image<float> image;
 	ISMRMRD::ImageHeader *header=m1->getObjectPtr();
 

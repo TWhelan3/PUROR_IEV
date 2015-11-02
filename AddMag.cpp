@@ -10,7 +10,7 @@ using namespace Gadgetron;
 
 int AddMag::process_config(ACE_Message_Block* mb)
 {	
-//this->msg_queue()->high_water_mark(128);//This helps with memory. It's not a hard limit though. 
+	this->msg_queue()->high_water_mark(128);//This helps with memory. It's not a hard limit though. 
 
 	Gadget* g=this->get_controller()->find_gadget("LoadIsmrmrdDatasetImages");
 	
