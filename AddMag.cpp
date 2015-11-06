@@ -21,19 +21,21 @@ int AddMag::process_config(ACE_Message_Block* mb)
 	this->set_parameter("filename", g->get_string_value("filename")->c_str());
 	this->set_parameter("groupname", g->get_string_value("groupname")->c_str());
 	this->set_parameter("varname", g->get_string_value("varname")->c_str());
-
-	boost::filesystem::path fname(filename.value());
 	
-		if (boost::filesystem::exists(fname)) {
+	boost::filesystem::path fname(filename.value());
+	boost::filesystem::path dname(workingDirectory.value());
+	
+	fname=dname/fname;
+
+	if (boost::filesystem::exists(fname)) {
          try {
-            pDataset = new ISMRMRD::Dataset(fname.c_str(), groupname.value().c_str(), true);
+            pDataset = new ISMRMRD::Dataset(fname.c_str(), groupname.value().c_str(), false);
          }
          catch (...) {
             GDEBUG("Unable to open: %s\n", fname.c_str());
          }
         }           
-
-
+	
 	ISMRMRD::IsmrmrdHeader hdr;
         ISMRMRD::deserialize(mb->rd_ptr(),hdr);
 	numEchos= hdr.encoding[0].encodingLimits.contrast().maximum +1;
@@ -62,6 +64,7 @@ int AddMag::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 	ACE_Message_Block* m3 =m2->cont();
 	while(m3!=NULL)
 	{
+		GINFO("Pass\n");
 		if(AsContainerMessage<ISMRMRD::MetaContainer>(m3)!=0)
 		{
 			meta=AsContainerMessage<ISMRMRD::MetaContainer>(m3);
@@ -90,7 +93,7 @@ int AddMag::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 	cm1->cont(cm2);
 
 	int index =(m1->getObjectPtr()->slice)*(numEchos)+m1->getObjectPtr()->contrast;
-	       try {
+	      try {
             pDataset->readImage(varname.value(), index, image);
          }
          catch (std::exception &ex) {
