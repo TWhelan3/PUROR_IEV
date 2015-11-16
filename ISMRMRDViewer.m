@@ -99,6 +99,7 @@ sz=info.Dataspace.Size;
 complex_struct = h5read(handles.openFile, [handles.toRead '/data'],[1 1 1 handles.channel 1],[sz(1) sz(2) sz(3) 1 sz(end)]);
 
 sliderStep = [1, 1] / (sz(end));
+set(handles.slider1, 'Min', 1);
 set(handles.slider1, 'Max', sz(end));
 set(handles.slider1, 'SliderStep', sliderStep);
 
@@ -121,7 +122,8 @@ function slider1_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'Value') returns position of slider
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
-handles.slice=floor(get(hObject, 'Value'));
+handles.slice=ceil(get(hObject, 'Value'));
+
 hold on
 imagesc(handles.phase(:,:,handles.slice));
 guidata(hObject,handles);
@@ -132,6 +134,7 @@ function slider1_CreateFcn(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 set(hObject, 'SliderStep',[1,1]);
+set(hObject, 'Value', 1)
 handles.slice=1;
 
 % Hint: slider controls usually have a light gray background.
@@ -244,6 +247,5 @@ handles.phase=getSOSMagnitude(handles.openFile, [handles.toRead '/data']);
 sliderStep = [1, 1] / (size(handles.phase,3));
 set(handles.slider1, 'Max', size(handles.phase,3));
 set(handles.slider1, 'SliderStep', sliderStep);
-hold on
-imagesc(handles.phase(:,:,1));
+imagesc(handles.phase(:,:,1)*10000); %this isn't scaling properly
 guidata(hObject,handles);
