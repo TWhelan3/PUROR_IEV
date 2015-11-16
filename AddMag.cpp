@@ -64,13 +64,16 @@ int AddMag::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 	ACE_Message_Block* m3 =m2->cont();
 	while(m3!=NULL)
 	{
-		GINFO("Pass\n");
 		if(AsContainerMessage<ISMRMRD::MetaContainer>(m3)!=0)
 		{
 			meta=AsContainerMessage<ISMRMRD::MetaContainer>(m3);
 			break;
 		}
 		m3=m3->cont();
+	}
+	if(meta)
+	{
+		meta->getObjectPtr()->set(GADGETRON_DATA_ROLE, "PHASE");
 	}
 
 	yres = m2->getObjectPtr()->get_size(0);
@@ -137,8 +140,7 @@ int AddMag::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 		GadgetContainerMessage<ISMRMRD::MetaContainer> *newmeta = new GadgetContainerMessage<ISMRMRD::MetaContainer>();
 		*(newmeta->getObjectPtr()) = *(meta->getObjectPtr());//actually copy instead of clone
 
-		newmeta->getObjectPtr()->set(GADGETRON_DATA_ROLE, "Magnitude");
-
+		newmeta->getObjectPtr()->set(GADGETRON_DATA_ROLE, "MAG");
 		cm2->cont(newmeta);
 	}
 

@@ -23,8 +23,11 @@ public Gadget1<ISMRMRD::ImageHeader>
 	int numEchos;
 	int numSlices;
 	int numPixels;
-	hoNDArray< float >  *phase_sum, *mag_sum;
-	float *phase_sum_ptr, *mag_sum_ptr;
+
+	std::vector<hoNDArray< float >*>  sum_arrays;
+	std::vector<std::string> types;
+	//hoNDArray< float >  *phase_sum, *mag_sum;
+	//float *phase_sum_ptr, *mag_sum_ptr;
 
       
      };

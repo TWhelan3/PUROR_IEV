@@ -15,6 +15,11 @@ int IEVChannelSumGadget::process_config(ACE_Message_Block* mb)
 	numEchos=hdr.encoding[0].encodingLimits.contrast().maximum +1; //number of echos is one more than highest numbers (0-based)
 	this->msg_queue()->high_water_mark(128);//This helps with memory. It's not a hard limit though. 
 	echoTimes=hdr.sequenceParameters.get().TE.get();//should be doing checks, structures are optional
+
+
+	for(int e=0;e<numEchos;e++)
+		echoTimes[e]/=1000; //still unclear if TEs are stored in seconds or milliseconds, but latter seems more common
+
 	num_slices=hdr.encoding[0].reconSpace.matrixSize.z; //number of slices (will this always work?)
 
 	yres=hdr.encoding[0].reconSpace.matrixSize.x; //match my (and MATLABs) unfortunate convention 
@@ -40,7 +45,8 @@ int IEVChannelSumGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* 
 	GadgetContainerMessage<ISMRMRD::MetaContainer> *meta;
 	if(filtered_unwrapped_msg_ptr)
 	{
-	 meta = AsContainerMessage<ISMRMRD::MetaContainer>(unfiltered_unwrapped_msg_ptr->cont());
+	 meta = AsContainerMessage<ISMRMRD::MetaContainer>(filtered_unwrapped_msg_ptr->cont());
+	 
 	}
 	static int c=0;	
 	int e;
@@ -69,7 +75,7 @@ int IEVChannelSumGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* 
 	if(meta)
 	{
 		attributes[echo]=*(meta->getObjectPtr());
-	 }
+	}
 	unfiltered_unwrapped_msg_ptr->release();//all data has been copied
 	if(echo==(numEchos-1))
 	{	
@@ -144,31 +150,41 @@ int IEVChannelSumGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* 
 		for(e=0; e<numEchos; e++)
 		{
 
-			GadgetContainerMessage<ISMRMRD::ImageHeader>* h1 = new GadgetContainerMessage<ISMRMRD::ImageHeader>(hdr_ptr[e]);
+			//GadgetContainerMessage<ISMRMRD::ImageHeader>* h1 = new GadgetContainerMessage<ISMRMRD::ImageHeader>(hdr_ptr[e]);
 		
-			//*h1->getObjectPtr()= *m1->getObjectPtr();
-
-
-			GadgetContainerMessage<hoNDArray< float > > *outimage = new GadgetContainerMessage<hoNDArray< float > >();
+			
+			//GadgetContainerMessage<hoNDArray< float > > *outimage = new GadgetContainerMessage<hoNDArray< float > >();
 		
-			try{outimage->getObjectPtr()->create(xres,yres);}	
+			/*try{outimage->getObjectPtr()->create(xres,yres);}	
 
 			catch (std::runtime_error &err){
 			GEXCEPTION(err,"Unable to create output image\n");
 			return GADGET_FAIL;  
-			}
+			}*/
 			
-			float* output_ptr=outimage->getObjectPtr()->get_data_ptr();
-			h1->getObjectPtr()->channels=1;
-			h1->getObjectPtr()->contrast=e;
-			h1->getObjectPtr()->data_type = ISMRMRD::ISMRMRD_FLOAT;//GADGET_IMAGE_REAL_FLOAT;
-			h1->getObjectPtr()->image_type = ISMRMRD::ISMRMRD_IMTYPE_PHASE;
-			h1->getObjectPtr()->slice= (h1->getObjectPtr()->image_index-1) % num_slices;//+e*num_slices;
-			h1->getObjectPtr()->image_series_index = e;
-			h1->cont(outimage);
-
-			if(output.value()==int(OUTPUT::LFS))
+			//float* output_ptr=outimage->getObjectPtr()->get_data_ptr();
+			hdr_ptr[e].channels=1;
+			hdr_ptr[e].contrast=e;
+			hdr_ptr[e].data_type = ISMRMRD::ISMRMRD_FLOAT;//GADGET_IMAGE_REAL_FLOAT;
+			hdr_ptr[e].image_type = ISMRMRD::ISMRMRD_IMTYPE_PHASE;//There is no frequency image type
+			hdr_ptr[e].slice= (hdr_ptr[e].image_index) % num_slices;//was hdr_ptr[e].image_index___-1_____) % num_slices before decrementor was added upstream
+						
+			if(output_phase.value())
 			{
+				//
+				GadgetContainerMessage<ISMRMRD::ImageHeader>* phase_hdr = new GadgetContainerMessage<ISMRMRD::ImageHeader>(hdr_ptr[e]);
+				//*(phase_hdr->getObjectPtr()) =*(hdr_ptr[e]->getObjectPtr());
+				GadgetContainerMessage<hoNDArray< float > > *comb_phase_msg = new GadgetContainerMessage<hoNDArray< float > >();
+				phase_hdr->getObjectPtr()->image_series_index=e+100;
+				try{comb_phase_msg->getObjectPtr()->create(xres,yres);}	
+
+				catch (std::runtime_error &err){
+				GEXCEPTION(err,"Unable to create output image\n");
+				return GADGET_FAIL;  
+				}
+				float* output_ptr=comb_phase_msg->getObjectPtr()->get_data_ptr();
+				phase_hdr->cont(comb_phase_msg);
+				//							
 				for (int i = 0; i < xres*yres; i++)
 					output_ptr[i]=freq_ptr[e*xres*yres*num_ch+i]*channel_weights[0][i]; //instead of setting to 0 and adding first channel
 				for(int ch=1; ch< num_ch; ch++)		
@@ -176,9 +192,38 @@ int IEVChannelSumGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* 
 					{
 						output_ptr[i]+=freq_ptr[e*xres*yres*num_ch+xres*yres*ch+i]*channel_weights[ch][i];
 					}
+				//
+				if(meta)
+				{
+				GadgetContainerMessage<ISMRMRD::MetaContainer>* meta = new GadgetContainerMessage<ISMRMRD::MetaContainer>(attributes[e]); 
+						
+				comb_phase_msg->cont(meta);	
+				
+				}
+				//
+				if (this->next()->putq(phase_hdr) == -1) {
+				m1->release();
+					GERROR("Unable to put collapsed images on next gadget's queue\n");
+				return GADGET_FAIL; 
+				}
+				
 			}
-			else if(output.value()==int(OUTPUT::PHASE))
+			if(output_LFS.value())
 			{
+				//
+				GadgetContainerMessage<ISMRMRD::ImageHeader>* freq_hdr=new GadgetContainerMessage<ISMRMRD::ImageHeader>(hdr_ptr[e]);
+				//*(freq_hdr->getObjectPtr()) =*(hdr_ptr[e]->getObjectPtr());
+				GadgetContainerMessage<hoNDArray< float > > *comb_freq_msg = new GadgetContainerMessage<hoNDArray< float > >();
+				freq_hdr->getObjectPtr()->image_series_index=e;
+				try{comb_freq_msg->getObjectPtr()->create(xres,yres);}	
+
+				catch (std::runtime_error &err){
+				GEXCEPTION(err,"Unable to create output image\n");
+				return GADGET_FAIL;  
+				}
+				float* output_ptr=comb_freq_msg->getObjectPtr()->get_data_ptr();
+				freq_hdr->cont(comb_freq_msg);
+				//
 				for (int i = 0; i < xres*yres; i++)
 				{
 				output_ptr[i]=unfiltered_phase_ptr[e*xres*yres*num_ch+i]*channel_weights[0][i]; //instead of setting to 0 and adding first channel
@@ -188,16 +233,23 @@ int IEVChannelSumGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* 
 					{
 						output_ptr[i]+=unfiltered_phase_ptr[e*xres*yres*num_ch+xres*yres*ch+i]*channel_weights[ch][i];; //instead of setting to 0 and adding first channel
 					}
+				//
+				if(meta)
+				{
+				GadgetContainerMessage<ISMRMRD::MetaContainer>* meta = new GadgetContainerMessage<ISMRMRD::MetaContainer>(attributes[e]); 
+				meta->getObjectPtr()->set(GADGETRON_DATA_ROLE, GADGETRON_IMAGE_FREQMAP);
+				//*(meta->getObjectPtr())=*(attributes[e]->getObjectPtr());
+				comb_freq_msg->cont(meta);	
+				}
+				//
+				if (this->next()->putq(freq_hdr) == -1) {
+				//m1->release();
+					GERROR("Unable to put collapsed images on next gadget's queue\n");
+				return GADGET_FAIL; 
+				}
+			
 			}
-			if(meta)
-			{
-				outimage->cont(new GadgetContainerMessage<ISMRMRD::MetaContainer>(attributes[e]));				
-			}
-			if (this->next()->putq(h1) == -1) {
-			//m1->release();
-				GERROR("Unable to put collapsed images on next gadget's queue\n");
-			return GADGET_FAIL; 
-			}
+			
 			
 		}
 		delete[] to_normalize;

@@ -16,7 +16,7 @@ int ContrastGadget::process_config(ACE_Message_Block* mb)
 	numEchos=hdr.encoding[0].encodingLimits.contrast().maximum +1; //number of echos is one more than highest numbers (0-based)
 	numSlices=hdr.encoding[0].reconSpace.matrixSize.z; //number of slices (will this always work?)
 
-	phase_sum = new hoNDArray< float >();
+	/*phase_sum = new hoNDArray< float >();
 	try{phase_sum->create(hdr.encoding[0].reconSpace.matrixSize.y,hdr.encoding[0].reconSpace.matrixSize.x);}
 	catch (std::runtime_error &err){
 		GEXCEPTION(err,"Unable to create phase_sum space.\n");
@@ -30,7 +30,7 @@ int ContrastGadget::process_config(ACE_Message_Block* mb)
 		GEXCEPTION(err,"Unable to create mag_sum space.\n");
 		return GADGET_FAIL;
 	}
-	mag_sum_ptr=mag_sum->get_data_ptr();
+	mag_sum_ptr=mag_sum->get_data_ptr();*/
 
 
 	numPixels=hdr.encoding[0].reconSpace.matrixSize.x *hdr.encoding[0].reconSpace.matrixSize.y;
@@ -48,7 +48,50 @@ int ContrastGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 	}
 	int echo = m1->getObjectPtr()->contrast;	
 	float* image_pixels = image_message->getObjectPtr()->get_data_ptr();
+	
+	std::string type = meta->getObjectPtr()->as_str(GADGETRON_DATA_ROLE);
+	int typeIndex;
+	bool found=false;	
+	int ii;
+	for(ii=0; ii<types.size(); ii++)
+		if(strcmp(types[ii].c_str(),type.c_str())==0)
+		{
+			type=types[ii];
+			found=true;
+			break;
+		}
+	typeIndex=ii;
+	if(!found)
+	{
+		types.push_back(type);
+		sum_arrays.push_back(new hoNDArray<float>());
+		
+		try{sum_arrays[typeIndex]->create(numPixels);}
+		catch (std::runtime_error &err){
+		GEXCEPTION(err,"Unable to create mag_sum space.\n");
+		return GADGET_FAIL;
+		}
+	}
 
+
+	float* dst_ptr=sum_arrays[typeIndex]->get_data_ptr();	
+
+	if(echo==0)
+	{
+		memcpy(dst_ptr, image_pixels, numPixels*sizeof(float));
+	}
+	else
+	{
+		#pragma omp parallel for	
+		for (int i = 0; i < numPixels; i++)
+		{
+	  	dst_ptr[i]+=image_pixels[i];		
+		}
+			
+	}
+	
+
+	/*
 	if(echo==0)
 	{
 		memcpy(phase_sum_ptr, image_pixels, numPixels*sizeof(float));
@@ -77,7 +120,7 @@ int ContrastGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 		  	phase_sum_ptr[i]+=image_pixels[i];		
 			}
 		}
-	}
+	}*/
  
 	if(pass_on.value()==YES && (this->next()->putq(m1) == -1)) {//pass on individual echos if config says to, if pass fails, throw error, if sending to ismrmrd can throw off order
 		m1->release();
@@ -86,7 +129,7 @@ int ContrastGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 	}
 	
 
-	if(echo==(numEchos-1)||echo==(numEchos+129))//Phase or Magnitude
+	if(echo==(numEchos-1))//if(echo==(numEchos-1)||echo==(numEchos+129))//Phase or Magnitude
 	{	
 		
 		//divide by number of echos!
@@ -94,10 +137,12 @@ int ContrastGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 		GadgetContainerMessage<hoNDArray< float > > *outimage;
 		*h1->getObjectPtr()= *m1->getObjectPtr();
 
-		if(m1->getObjectPtr()->image_type==ISMRMRD::ISMRMRD_IMTYPE_MAGNITUDE)
+		/*if(m1->getObjectPtr()->image_type==ISMRMRD::ISMRMRD_IMTYPE_MAGNITUDE)
 			outimage = new GadgetContainerMessage< hoNDArray<float> >(mag_sum);
 		else
-			outimage = new GadgetContainerMessage< hoNDArray<float> >(phase_sum);
+			outimage = new GadgetContainerMessage< hoNDArray<float> >(phase_sum);*/
+
+		outimage= new GadgetContainerMessage<hoNDArray<float>>(sum_arrays[typeIndex]);
 		
 		float* out_ptr = outimage->getObjectPtr()->get_data_ptr();
 		float meanterm=1/(float)numEchos;

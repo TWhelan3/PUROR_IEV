@@ -24,7 +24,10 @@ int UnwrapGadget::process_config(ACE_Message_Block* mb)
 		if(sInfo.patientName.is_present())
 			id= sInfo.patientName.get();//assuming this field is acutally a pseudoanonymous id
 	}
-
+	
+	boost::filesystem::path fname((id+filename.value()+".ismrmrd"));
+        
+	boost::filesystem::remove((id+filename.value()+".ismrmrd"));
 	if(savephase.value()==1)
 	{
 		dsToWrite = new ISMRMRD::Dataset((id+filename.value()+".ismrmrd").c_str(),"images", true);
@@ -37,7 +40,7 @@ int UnwrapGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 	static int myid = 0;
 
 	GadgetContainerMessage<hoNDArray<std::complex<float> > > *m2 =AsContainerMessage<hoNDArray<std::complex<float> > > (m1->cont());
-	 GadgetContainerMessage<hoNDArray<int>> *supportmask_msg = AsContainerMessage<hoNDArray<int>>(m2->cont());
+	GadgetContainerMessage<hoNDArray<int>> *supportmask_msg = AsContainerMessage<hoNDArray<int>>(m2->cont());
 	GadgetContainerMessage<hoNDArray<int>> *mask_msg;
 	GadgetContainerMessage<ISMRMRD::MetaContainer> *meta;
 
@@ -98,6 +101,12 @@ int UnwrapGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 		meta = AsContainerMessage<ISMRMRD::MetaContainer>(mask_msg->cont());
 		mask_msg->cont(NULL);//allow mask to be released without losing meta
 	}
+
+	if(!meta)	
+		meta = new GadgetContainerMessage<ISMRMRD::MetaContainer>();
+	
+	
+
 	#pragma omp parallel for private(channel_index)	
 	for(channel_index=0; channel_index<num_ch; channel_index++)
 	{
@@ -189,27 +198,48 @@ int UnwrapGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 		
 		diff_x(phase_x, fullsignal,md);
 
-		delete md;
+		/*double tmp_mean=0;
+		int k=0;
+		for(int ii=0; ii < xres*yres; ii++)
+		{
+			if(md->support_MASK[ii]==1)
+			{
+			
+				tmp_mean+=phase_x[ii];
+				k++;
+			}
+		}
+		tmp_mean/=k;
+		for(int ii=0; ii < xres*yres; ii++)
+		{
+	
+				if(fullsignal || md->MASK[ii]==1)//should shortcircuit with fullsignal (i.e. not try to check mask)
+					phase_x[ii]-=PI2*round(tmp_mean/PI2);
+	
+		}*/
 
+		delete md;
+	
 	
 	}
 	
 
 	delete phase_y_block;
-	//need to deal with meta
+	
 
 	new_header_msg->cont(new_image_msg);
 	
 
 	//Support Mask would be used for 3D	
 	//new_image_msg->cont(supportmask_msg);
-	if(meta)
-	{
-		meta->getObjectPtr()->set(GADGETRON_DATA_ROLE, GADGETRON_IMAGE_PHASE);
+	//supportmask_msg->cont(meta);
+
+	meta->getObjectPtr()->append(GADGETRON_DATA_ROLE, GADGETRON_IMAGE_PHASE);
+	meta->getObjectPtr()->append(GADGETRON_IMAGENUMBER,(long) m1->getObjectPtr()->image_index);
 	        
-		//supportmask_msg->cont(meta);
-		new_image_msg->cont(meta);		
-	}
+		
+	new_image_msg->cont(meta);		
+
 	//if(fullsignal)
 	//{
 		//supportmask_msg->getObjectPtr()->get_data_ptr()[0]-=2;
