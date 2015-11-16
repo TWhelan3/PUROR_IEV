@@ -26,14 +26,8 @@
 		<dll>gadgetron_PUROR</dll>
 		<classname>UnwrapGadget</classname>
 		 <property><name>threads</name><value>6</value></property>
-		<!--<property><name>savephase</name><value>0</value></property>-->
+		<property><name>savephase</name><value>1</value></property>
 	</gadget>
-	<!--<gadget>
-		<name>Unwrap3D</name>
-		<dll>gadgetron_PUROR</dll>
-		<classname>Unwrap3DGadget</classname>
-		<property><name>savephase</name><value>0</value></property>
-	</gadget>-->
 	<gadget>
 		<name>HighPassFilter</name>
 		<dll>gadgetron_PUROR</dll>
@@ -42,10 +36,6 @@
 			<name>sigma</name>
 			<value>.015</value>
 		</property>
-		<!--<property>
-			<name>output</name>
-			<value>output@IEVChannelSum</value>
-		</property>-->
 	</gadget>
 	<gadget>
 		<name>Accumulator</name>
@@ -60,26 +50,39 @@
 			<value>1</value>
 		</property>
 	</gadget>
+<!--	<gadget>
+		<name>AddMag</name>
+		<dll>gadgetron_PUROR</dll>
+		<classname>AddMag</classname>
+	</gadget>
 	<gadget>
 		<name>Contrast</name>
 		<dll>gadgetron_PUROR</dll>
 		<classname>ContrastGadget</classname>
 		<property>
 			<name>pass_on</name>
-			<value>0</value>
+			<value>1</value>
+		</property>
+	</gadget>-->
+	<gadget>
+		<name>AutoScaleEntireImage</name>
+		<dll>cfmm_gadgets</dll>
+		<classname>AutoScaleEntireImage</classname>
+		<property>
+		<name>numEchos</name>
 		</property>
 	</gadget>
 	<gadget>
-		<name>AutoScale</name>
-		<dll>gadgetron_mricore</dll>
-		<classname>AutoScaleGadget</classname>
+		<name>DICOMStream</name>
+		<dll>cfmm_gadgets</dll>
+		<classname>DicomStream</classname>
 	</gadget>
 	<gadget>
 		<name>DICOMSave</name>
 		<dll>cfmm_gadgets</dll>
 		<classname>DicomSave</classname>
-		<!--<property>
+		<property>
 		<name>dicom_dir</name>
-		</property>-->
+		</property>
 	</gadget>
 </gadgetronStreamConfiguration>

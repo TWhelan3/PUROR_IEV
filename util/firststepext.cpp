@@ -1,5 +1,5 @@
-#include "ismrmrd/dataset.h"
-#include "ismrmrd/xml.h"
+#include <ismrmrd/dataset.h>
+#include <ismrmrd/xml.h>
 #include "unistd.h"
 #include <fstream>
 #include <iostream>
@@ -18,6 +18,8 @@ int main(int argc, char *argv[]){//take the filename as an argument
 	return -1;
 	}
 
+	//std::string fullpath = "/scratch/twhelan5/";
+	//fullpath.append(argv[1]); 
 
 	ISMRMRD::Dataset d(argv[1], "/images", false);
 	//ismrmrd_dataset_exists isn't in library yet but is coming soon I think (https://github.com/ismrmrd/ismrmrd/issues/29)
@@ -44,7 +46,7 @@ int main(int argc, char *argv[]){//take the filename as an argument
 
 	new_xml=fileNameBase+".xml";		//cut off .ismrmrd and add .xml
 	
-	std::ifstream base_xml("base.xml");
+	std::ifstream base_xml("/work/twhelan5/PUROR_IEV/base.xml");
 	if(!base_xml.is_open())
 	{
 		std::cout<<"Failed to open base xml file\n"<<std::endl;
@@ -75,8 +77,19 @@ int main(int argc, char *argv[]){//take the filename as an argument
 	}
 	xml_output<<reader<<value;							//if triggered, output the new value line
 
-	//Add volume parameters for 3D unwrap/Autoscaling here
+	long int num_echos=hdr.encoding[0].encodingLimits.contrast().maximum+1;		//0 based and we are adding a cumulative average
+	tofollow = "<name>numEchos</name>";
+	value = starttag + std::to_string(num_echos) + endtag;	
+	//<value># echos</value>
+	std::getline(base_xml, reader);
+	pos=reader.find_first_of("<");
 	
+	while(reader.substr(pos,std::string::npos).compare(tofollow)!=0){		//read line and compare to trigger line
+		xml_output<<reader<<std::endl;							//copy
+		std::getline(base_xml, reader);							//get next line
+		pos=reader.find_first_of("<");							//find first <
+	}
+	xml_output<<reader<<value;
 
 	//Add output file to xml as SaveDICOM's filename parameter
 
@@ -110,17 +123,18 @@ int main(int argc, char *argv[]){//take the filename as an argument
 	///end of xml creation
 
 	//figure out sqsub arguments from hdr info
-	long int num_echos=hdr.encoding[0].encodingLimits.contrast().maximum+1;
 	long int num_chan=hdr.acquisitionSystemInformation.get().receiverChannels.get();
 	long int x = hdr.encoding[0].reconSpace.matrixSize.x;
 	long int y = hdr.encoding[0].reconSpace.matrixSize.y;
 	long int z = hdr.encoding[0].reconSpace.matrixSize.z;
-	double run_minutes_d = x*y*z*num_echos*num_chan/120000000.0; 
+	double run_minutes_d = x*y*z*num_echos*num_chan/120000000.0;
+	if(run_minutes_d<5)
+		run_minutes_d=5; 
 	std::string run_minutes=std::to_string(ceil(run_minutes_d));
 	char run_gigs[]="8";//how am I going to figure this out? 
 	//std::cout<<x<<" "<<y<<" "<<z<<" "<<num_echos<<" "<<num_chan<<" "<<run_minutes_d <<" "<<run_minutes<<" "<<run_gigs<<std::endl;	
-	if(execl("/work/twhelan5/local/bin/submitscript", "submitscript", fileNameBase.c_str(),run_minutes.c_str(),run_gigs,  0)==-1) //run the program
-	//	std::cout<<"Whoops"<<std::endl;
+	if(execl("/home/twhelan5/gadgetron/scripts/submitscript", "submitscript", fileNameBase.c_str(),run_minutes.c_str(),run_gigs,  0)==-1) //run the program
+		std::cout<<"Whoops"<<std::endl;
 	
 		
 
