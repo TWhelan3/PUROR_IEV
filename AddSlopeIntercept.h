@@ -18,6 +18,8 @@ namespace Gadgetron{
 		virtual int process(GadgetContainerMessage<DcmFileFormat> * m1);
 		GADGET_PROPERTY(intercept, float, "Intercept for Dicom", 0);
 		GADGET_PROPERTY(slope, float, "Slope for Dicom", 0);
+	
+		char generatedStudyUID[64];
 	};
 
 }

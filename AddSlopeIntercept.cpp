@@ -51,6 +51,12 @@ int AddSlopeIntercept::process(GadgetContainerMessage<DcmFileFormat> * m1)
 	float rescaleIntercept=	meta->getObjectPtr()->as_double("Intercept");
 	float rescaleSlope=	meta->getObjectPtr()->as_double("Scale");
 
+	static bool studyUIDmade=false;
+	std::time_t rawtime;
+         std::time(&rawtime);
+         std::tm *timeinfo = std::localtime(&rawtime);
+	
+
 	rescaleIntercept = -1.0*rescaleIntercept*rescaleSlope;
 	
 	rescaleSlope= 1.0/rescaleSlope;
@@ -63,7 +69,78 @@ int AddSlopeIntercept::process(GadgetContainerMessage<DcmFileFormat> * m1)
 	ACE_OS::snprintf(buf, BUFSIZE, "%f", rescaleSlope);//meta->getObjectPtr()->as_double("Intercept"));
 	WRITE_DCM_STRING(key, buf);
 
+	key.set(0x0008,0x1030); //Study Description
+	if(!dataset->tagExistsWithValue(key))
+	{
+		ACE_OS::snprintf(buf, BUFSIZE, "%s", "Gadgetron^IEV");
+		WRITE_DCM_STRING(key, buf);
+	}
+
+
+	key.set(0x0008,0x103E); //Series Description
+	if(!dataset->tagExistsWithValue(key))
+	{
+		ACE_OS::snprintf(buf, BUFSIZE, "%s", "IEV phase");
+		WRITE_DCM_STRING(key, buf);
+	}
+
+	key.set(0x0020,0x0010);//Study IUD
+	if(!dataset->tagExistsWithValue(key))
+	{
+		if(studyUIDmade)
+			WRITE_DCM_STRING(key, generatedStudyUID);
+		else
+		{
+			dcmGenerateUniqueIdentifier(generatedStudyUID, SITE_STUDY_UID_ROOT);
+			studyUIDmade=true;
+		}
+		
+		// be sure to use the same one for all series you generate
+	}
+	
+	std::strftime(buf, 100, "%Y%m%d", timeinfo);
+
+	key.set(0x0008,0x0020);//Study Date
+	if(!dataset->tagExistsWithValue(key))
+	{
+		WRITE_DCM_STRING(key, buf);
+	}
+
+	key.set(0x0008,0x0021);//Series Date
+	if(!dataset->tagExistsWithValue(key))
+	{
+		WRITE_DCM_STRING(key, buf);
+	}
+
+	key.set(0x0008,0x0012);//Instance Creation Date		
+	if(!dataset->tagExistsWithValue(key))
+	{
+		WRITE_DCM_STRING(key, buf);
+	}	
+	std::strftime(buf, 100, "%H%M%S.000", timeinfo);
+
+	key.set(0x0008,0x0030);//Study Time
+	if(!dataset->tagExistsWithValue(key))
+	{
+		WRITE_DCM_STRING(key, buf);
+	}
+	
+
+	key.set(0x0008,0x0031);//Series Time
+	if(!dataset->tagExistsWithValue(key))
+	{
+		WRITE_DCM_STRING(key, buf);
+	}	
+
+
+	key.set(0x0008,0x0013);//Instance Creation Time
+	if(!dataset->tagExistsWithValue(key))
+	{
+		WRITE_DCM_STRING(key, buf);
+	}	
+
 	delete[] buf;
+
 	
 	//add try catch 
 
