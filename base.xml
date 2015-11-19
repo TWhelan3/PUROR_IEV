@@ -17,6 +17,11 @@
 		</property>
 	</gadget>
 	<gadget>
+		<name>DecrementIndex</name>
+		<dll>gadgetron_PUROR</dll>
+		<classname>DecImageIndex</classname>
+	</gadget>
+	<gadget>
 		<name>GetMasks</name>
 		<dll>gadgetron_PUROR</dll>
 		<classname>GetMaskGadget</classname>
@@ -34,21 +39,13 @@
 		<classname>HPFGadget</classname>
 		<property>
 			<name>sigma</name>
-			<value>.015</value>
+			<value>.005</value>
 		</property>
 	</gadget>
 	<gadget>
 		<name>Accumulator</name>
 		<dll>gadgetron_PUROR</dll>
 		<classname>IEVChannelSumGadget</classname>
-		<property>
-			<name>iev</name>
-			<value>1</value>
-		</property>
-		<property>
-			<name>output</name>
-			<value>1</value>
-		</property>
 	</gadget>
 <!--	<gadget>
 		<name>AddMag</name>
@@ -76,6 +73,11 @@
 		<name>DICOMStream</name>
 		<dll>cfmm_gadgets</dll>
 		<classname>DicomStream</classname>
+	</gadget>
+	<gadget>
+		<name>AddDicomSlopeIntercept</name>
+		<dll>gadgetron_PUROR</dll>
+		<classname>AddSlopeIntercept</classname>
 	</gadget>
 	<gadget>
 		<name>DICOMSave</name>
