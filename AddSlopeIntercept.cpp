@@ -8,10 +8,7 @@ namespace Gadgetron{
 
 int AddSlopeIntercept::process_config(ACE_Message_Block* mb)
 {
-	//this gadget will be very fast, putting a high water mark would 
-	//do nothing unless the next one is very slow and did not address backlog
-	//in future might want to check read xml in this function
-	
+
 	return GADGET_OK;
 }
 
@@ -80,7 +77,14 @@ int AddSlopeIntercept::process(GadgetContainerMessage<DcmFileFormat> * m1)
 	key.set(0x0008,0x103E); //Series Description
 	if(!dataset->tagExistsWithValue(key))
 	{
-		ACE_OS::snprintf(buf, BUFSIZE, "%s", "IEV phase");
+		std::string type;
+		
+		if(meta)
+			type=meta->getObjectPtr()->as_str(GADGETRON_DATA_ROLE);
+		else
+			type="MRI Images";
+	
+		ACE_OS::snprintf(buf, BUFSIZE, "%s", type.c_str());
 		WRITE_DCM_STRING(key, buf);
 	}
 
@@ -117,7 +121,7 @@ int AddSlopeIntercept::process(GadgetContainerMessage<DcmFileFormat> * m1)
 	{
 		WRITE_DCM_STRING(key, buf);
 	}	
-	std::strftime(buf, 100, "%H%M%S.000", timeinfo);
+	std::strftime(buf, 100, "%H%M%S", timeinfo);
 
 	key.set(0x0008,0x0030);//Study Time
 	if(!dataset->tagExistsWithValue(key))

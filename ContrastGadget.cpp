@@ -157,7 +157,6 @@ int ContrastGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 		h1->cont(outimage);
 		h1->getObjectPtr()->slice =m1->getObjectPtr()->slice;
 		h1->getObjectPtr()->image_index = m1->getObjectPtr()->image_index+1000;
-		h1->getObjectPtr()->image_series_index=m1->getObjectPtr()->image_series_index+1;
 		h1->getObjectPtr()->contrast=m1->getObjectPtr()->contrast+1;
 	
 		if(meta)

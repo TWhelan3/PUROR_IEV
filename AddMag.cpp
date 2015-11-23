@@ -90,8 +90,8 @@ int AddMag::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 	*cm1->getObjectPtr() = *m1->getObjectPtr();
 	cm1->getObjectPtr()->data_type = ISMRMRD::ISMRMRD_FLOAT;//GADGET_IMAGE_REAL_FLOAT;
 	cm1->getObjectPtr()->image_type=ISMRMRD::ISMRMRD_IMTYPE_MAGNITUDE;
-	cm1->getObjectPtr()->contrast+=130; 
-	cm1->getObjectPtr()->image_series_index+=130;
+	 
+	cm1->getObjectPtr()->image_series_index+=102;
 	
 	cm1->cont(cm2);
 

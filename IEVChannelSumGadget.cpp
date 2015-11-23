@@ -50,7 +50,6 @@ int IEVChannelSumGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* 
 	}
 	static int c=0;	
 	int e;
-	int image_series_index = m1->getObjectPtr()->image_series_index;
 	int echo = m1->getObjectPtr()->contrast;
 	float inv_echo_time;
 	if(!filtered_unwrapped_msg_ptr || !unfiltered_unwrapped_msg_ptr)
@@ -175,7 +174,7 @@ int IEVChannelSumGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* 
 				GadgetContainerMessage<ISMRMRD::ImageHeader>* phase_hdr = new GadgetContainerMessage<ISMRMRD::ImageHeader>(hdr_ptr[e]);
 				//*(phase_hdr->getObjectPtr()) =*(hdr_ptr[e]->getObjectPtr());
 				GadgetContainerMessage<hoNDArray< float > > *comb_phase_msg = new GadgetContainerMessage<hoNDArray< float > >();
-				phase_hdr->getObjectPtr()->image_series_index=e+100;
+				phase_hdr->getObjectPtr()->image_series_index=100;
 				try{comb_phase_msg->getObjectPtr()->create(xres,yres);}	
 
 				catch (std::runtime_error &err){
@@ -214,7 +213,7 @@ int IEVChannelSumGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* 
 				GadgetContainerMessage<ISMRMRD::ImageHeader>* freq_hdr=new GadgetContainerMessage<ISMRMRD::ImageHeader>(hdr_ptr[e]);
 				//*(freq_hdr->getObjectPtr()) =*(hdr_ptr[e]->getObjectPtr());
 				GadgetContainerMessage<hoNDArray< float > > *comb_freq_msg = new GadgetContainerMessage<hoNDArray< float > >();
-				freq_hdr->getObjectPtr()->image_series_index=e;
+				freq_hdr->getObjectPtr()->image_series_index=101;
 				try{comb_freq_msg->getObjectPtr()->create(xres,yres);}	
 
 				catch (std::runtime_error &err){
