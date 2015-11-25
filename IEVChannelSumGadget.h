@@ -4,6 +4,10 @@
 #define IEVChannelSumGadget_H_
 
 #include "PUROR.h"
+#include <fstream>
+#include <iostream>
+//#include <string>
+//#include <stdlib.h>
 
 namespace Gadgetron{
 
@@ -37,6 +41,7 @@ public Gadget1<ISMRMRD::ImageHeader>
 	ISMRMRD::ImageHeader* hdr_ptr;
 	ISMRMRD::MetaContainer* attributes;
 	
+	int series_id_offset;
 
 	//add array for pixels and headers
 	

@@ -26,6 +26,36 @@ int IEVChannelSumGadget::process_config(ACE_Message_Block* mb)
 	xres=hdr.encoding[0].reconSpace.matrixSize.y;
 	num_ch=hdr.acquisitionSystemInformation.get().receiverChannels();
 
+	//Since we cannot connect to server to get series numbers, log locally
+	std::string reader;//buffer for lines read in
+	std::string found_id;
+	std::string id_to_find = hdr.studyInformation.get().studyInstanceUID.get();
+	//try to open file
+	int pos;
+	
+	std::fstream log("series_number_log");
+	series_id_offset=99;
+	//see if number is there
+	if(log.is_open())
+	{
+		do{
+
+			std::getline(log, reader);
+			pos=reader.find_first_of(":");	
+			found_id=reader.substr(0,pos);
+
+			if(found_id.compare(id_to_find)==0){//earlier series were part of this study
+				series_id_offset=atoi(reader.substr(pos+1, std::string::npos).c_str());
+			}
+		}while(!log.eof());
+		log.close();
+	}
+		
+	//if file doesn't exist, it will be created	
+	log.open("series_number_log", std::fstream::app | std::fstream::out);
+	log<<id_to_find<<":"<<series_id_offset+output_phase.value()+output_LFS.value()<<std::endl;
+	log.close();
+
 
 	freq_ptr=new float[xres*yres*num_ch*numEchos];
 		
@@ -174,7 +204,7 @@ int IEVChannelSumGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* 
 				GadgetContainerMessage<ISMRMRD::ImageHeader>* phase_hdr = new GadgetContainerMessage<ISMRMRD::ImageHeader>(hdr_ptr[e]);
 				//*(phase_hdr->getObjectPtr()) =*(hdr_ptr[e]->getObjectPtr());
 				GadgetContainerMessage<hoNDArray< float > > *comb_phase_msg = new GadgetContainerMessage<hoNDArray< float > >();
-				phase_hdr->getObjectPtr()->image_series_index=100;
+				phase_hdr->getObjectPtr()->image_series_index=series_id_offset+1;
 				try{comb_phase_msg->getObjectPtr()->create(xres,yres);}	
 
 				catch (std::runtime_error &err){
@@ -183,14 +213,16 @@ int IEVChannelSumGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* 
 				}
 				float* output_ptr=comb_phase_msg->getObjectPtr()->get_data_ptr();
 				phase_hdr->cont(comb_phase_msg);
-				//							
+				//	
 				for (int i = 0; i < xres*yres; i++)
-					output_ptr[i]=freq_ptr[e*xres*yres*num_ch+i]*channel_weights[0][i]; //instead of setting to 0 and adding first channel
-				for(int ch=1; ch< num_ch; ch++)		
+				{
+				output_ptr[i]=unfiltered_phase_ptr[e*xres*yres*num_ch+i]*channel_weights[0][i]; //instead of setting to 0 and adding first channel
+				}
+				for(int ch=1; ch< num_ch; ch++)	
 					for (int i = 0; i < xres*yres; i++)
 					{
-						output_ptr[i]+=freq_ptr[e*xres*yres*num_ch+xres*yres*ch+i]*channel_weights[ch][i];
-					}
+						output_ptr[i]+=unfiltered_phase_ptr[e*xres*yres*num_ch+xres*yres*ch+i]*channel_weights[ch][i];; //instead of setting to 0 and adding first channel
+					}						
 				//
 				if(meta)
 				{
@@ -213,7 +245,7 @@ int IEVChannelSumGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* 
 				GadgetContainerMessage<ISMRMRD::ImageHeader>* freq_hdr=new GadgetContainerMessage<ISMRMRD::ImageHeader>(hdr_ptr[e]);
 				//*(freq_hdr->getObjectPtr()) =*(hdr_ptr[e]->getObjectPtr());
 				GadgetContainerMessage<hoNDArray< float > > *comb_freq_msg = new GadgetContainerMessage<hoNDArray< float > >();
-				freq_hdr->getObjectPtr()->image_series_index=101;
+				freq_hdr->getObjectPtr()->image_series_index=series_id_offset+output_phase.value()+1;
 				try{comb_freq_msg->getObjectPtr()->create(xres,yres);}	
 
 				catch (std::runtime_error &err){
@@ -224,13 +256,11 @@ int IEVChannelSumGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* 
 				freq_hdr->cont(comb_freq_msg);
 				//
 				for (int i = 0; i < xres*yres; i++)
-				{
-				output_ptr[i]=unfiltered_phase_ptr[e*xres*yres*num_ch+i]*channel_weights[0][i]; //instead of setting to 0 and adding first channel
-				}
-				for(int ch=1; ch< num_ch; ch++)	
-					for (int i = 1; i < xres*yres; i++)
+					output_ptr[i]=freq_ptr[e*xres*yres*num_ch+i]*channel_weights[0][i]; //instead of setting to 0 and adding first channel
+				for(int ch=1; ch< num_ch; ch++)		
+					for (int i = 0; i < xres*yres; i++)
 					{
-						output_ptr[i]+=unfiltered_phase_ptr[e*xres*yres*num_ch+xres*yres*ch+i]*channel_weights[ch][i];; //instead of setting to 0 and adding first channel
+						output_ptr[i]+=freq_ptr[e*xres*yres*num_ch+xres*yres*ch+i]*channel_weights[ch][i];
 					}
 				//
 				if(meta)

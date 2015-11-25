@@ -96,6 +96,7 @@ int AddSlopeIntercept::process(GadgetContainerMessage<DcmFileFormat> * m1)
 		else
 		{
 			dcmGenerateUniqueIdentifier(generatedStudyUID, SITE_STUDY_UID_ROOT);
+			WRITE_DCM_STRING(key, generatedStudyUID);
 			studyUIDmade=true;
 		}
 		
