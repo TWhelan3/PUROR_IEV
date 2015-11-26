@@ -31,7 +31,26 @@
 		<dll>gadgetron_PUROR</dll>
 		<classname>UnwrapGadget</classname>
 		 <property><name>threads</name><value>6</value></property>
-		<property><name>savephase</name><value>1</value></property>
+	</gadget>
+	<gadget>
+		<name>SaveIsmrmrdDatasetImages</name>
+		<dll>cfmm_gadgets</dll>
+		<classname>SaveIsmrmrdDatasetImages</classname>
+		<property>
+			<name>filename</name>
+		</property>
+		<property>
+			<name>groupname</name>
+			<value>images</value>
+		</property>
+		<property>
+			<name>varname</name>
+			<value>phase</value>
+		</property>
+		<property>
+			<name>pass_on_undesired_data</name>
+			<value>true</value>
+		</property>
 	</gadget>
 	<gadget>
 		<name>HighPassFilter</name>
@@ -67,6 +86,10 @@
 		<classname>AutoScaleEntireImage</classname>
 		<property>
 		<name>numEchos</name>
+		</property>
+		<property>
+		<name>is_signed</name>
+		<value>true</value>
 		</property>
 	</gadget>
 	<gadget>
