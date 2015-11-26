@@ -2,7 +2,7 @@
 //Written by Tim Whelan 2015
 //Input ImageHeader-> ???
 //Output ImageHeader-> ??? 
-#include "AddSlopeIntercept.h"
+#include "AddMetaData.h"
 #include "DicomFinishGadget.h"
 namespace Gadgetron{
 
@@ -75,8 +75,8 @@ int AddSlopeIntercept::process(GadgetContainerMessage<DcmFileFormat> * m1)
 
 
 	key.set(0x0008,0x103E); //Series Description
-	if(!dataset->tagExistsWithValue(key))
-	{
+	//if(!dataset->tagExistsWithValue(key))
+	//{
 		std::string type;
 		
 		if(meta)
@@ -86,19 +86,14 @@ int AddSlopeIntercept::process(GadgetContainerMessage<DcmFileFormat> * m1)
 	
 		ACE_OS::snprintf(buf, BUFSIZE, "%s", type.c_str());
 		WRITE_DCM_STRING(key, buf);
-	}
+	//}
 
-	key.set(0x0020,0x0010);//Study IUD
+	//Study UID should be created in IEVChannelSumGadget. 
+	key.set(0x0020,0x0010);//Study UID
 	if(!dataset->tagExistsWithValue(key))
 	{
-		if(studyUIDmade)
-			WRITE_DCM_STRING(key, generatedStudyUID);
-		else
-		{
-			dcmGenerateUniqueIdentifier(generatedStudyUID, SITE_STUDY_UID_ROOT);
-			WRITE_DCM_STRING(key, generatedStudyUID);
-			studyUIDmade=true;
-		}
+		
+			WRITE_DCM_STRING(key, meta->getObjectPtr()->as_str("StudyInstanceUID"));
 		
 		// be sure to use the same one for all series you generate
 	}

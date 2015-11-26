@@ -29,7 +29,16 @@ int IEVChannelSumGadget::process_config(ACE_Message_Block* mb)
 	//Since we cannot connect to server to get series numbers, log locally
 	std::string reader;//buffer for lines read in
 	std::string found_id;
-	std::string id_to_find = hdr.studyInformation.get().studyInstanceUID.get();
+	
+	ISMRMRD::StudyInformation studyInfo = hdr.studyInformation.get();
+
+	if(hdr.studyInformation.is_present())
+		studyInstanceUID = hdr.studyInformation.get().studyInstanceUID.get();
+	else
+	{
+		dcmGenerateUniqueIdentifier(generatedStudyUID, SITE_STUDY_UID_ROOT);
+		studyInstanceUID=std::string(generatedStudyUID);
+	}
 	//try to open file
 	int pos;
 	
@@ -44,7 +53,7 @@ int IEVChannelSumGadget::process_config(ACE_Message_Block* mb)
 			pos=reader.find_first_of(":");	
 			found_id=reader.substr(0,pos);
 
-			if(found_id.compare(id_to_find)==0){//earlier series were part of this study
+			if(found_id.compare(studyInstanceUID)==0){//earlier series were part of this study
 				series_id_offset=atoi(reader.substr(pos+1, std::string::npos).c_str());
 			}
 		}while(!log.eof());
@@ -53,7 +62,7 @@ int IEVChannelSumGadget::process_config(ACE_Message_Block* mb)
 		
 	//if file doesn't exist, it will be created	
 	log.open("series_number_log", std::fstream::app | std::fstream::out);
-	log<<id_to_find<<":"<<series_id_offset+output_phase.value()+output_LFS.value()<<std::endl;
+	log<<studyInstanceUID<<":"<<series_id_offset+output_phase.value()+output_LFS.value()<<std::endl;
 	log.close();
 
 
@@ -77,6 +86,7 @@ int IEVChannelSumGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* 
 	{
 	 meta = AsContainerMessage<ISMRMRD::MetaContainer>(filtered_unwrapped_msg_ptr->cont());
 	 
+	 meta->getObjectPtr()->append("StudyInstanceUID", studyInstanceUID.c_str());//may be in xml header, may not be, in that case put it in xml so it can get to dicom
 	}
 	static int c=0;	
 	int e;
@@ -254,6 +264,7 @@ int IEVChannelSumGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* 
 				}
 				float* output_ptr=comb_freq_msg->getObjectPtr()->get_data_ptr();
 				freq_hdr->cont(comb_freq_msg);
+				freq_hdr->getObjectPtr()->image_type = 6;
 				//
 				for (int i = 0; i < xres*yres; i++)
 					output_ptr[i]=freq_ptr[e*xres*yres*num_ch+i]*channel_weights[0][i]; //instead of setting to 0 and adding first channel

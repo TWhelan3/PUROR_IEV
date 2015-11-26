@@ -4,6 +4,9 @@
 #define IEVChannelSumGadget_H_
 
 #include "PUROR.h"
+#include <dcmtk/dcmdata/dcfilefo.h>
+#include "meta_key_def.h"
+#include "DicomFinishGadget.h"
 #include <fstream>
 #include <iostream>
 //#include <string>
@@ -40,7 +43,9 @@ public Gadget1<ISMRMRD::ImageHeader>
 	float* unfiltered_phase_ptr;
 	ISMRMRD::ImageHeader* hdr_ptr;
 	ISMRMRD::MetaContainer* attributes;
-	
+	char generatedStudyUID[64];
+	std::string studyInstanceUID;
+
 	int series_id_offset;
 
 	//add array for pixels and headers
