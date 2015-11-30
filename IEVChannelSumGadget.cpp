@@ -30,8 +30,6 @@ int IEVChannelSumGadget::process_config(ACE_Message_Block* mb)
 	std::string reader;//buffer for lines read in
 	std::string found_id;
 	
-	ISMRMRD::StudyInformation studyInfo = hdr.studyInformation.get();
-
 	if(hdr.studyInformation.is_present())
 		studyInstanceUID = hdr.studyInformation.get().studyInstanceUID.get();
 	else
