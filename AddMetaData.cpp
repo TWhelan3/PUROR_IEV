@@ -41,7 +41,7 @@ int AddSlopeIntercept::process(GadgetContainerMessage<DcmFileFormat> * m1)
 
 	unsigned int BUFSIZE = 1024;
         char *buf = new char[BUFSIZE];
-	const char* badbuf;
+	const char* checkbuf;
 	OFCondition status;
 	DcmTagKey key;
 	DcmDataset *dataset = dcm->getDataset();
@@ -53,6 +53,14 @@ int AddSlopeIntercept::process(GadgetContainerMessage<DcmFileFormat> * m1)
 	std::time_t rawtime;
          std::time(&rawtime);
          std::tm *timeinfo = std::localtime(&rawtime);
+
+	 // Window Center
+        key.set(0x0028, 0x1050);
+        dataset->remove(key);
+        
+        // Window Width
+        key.set(0x0028, 0x1051);
+        dataset->remove(key);
 	
 
 	rescaleIntercept = -1.0*rescaleIntercept*rescaleSlope;
@@ -69,8 +77,8 @@ int AddSlopeIntercept::process(GadgetContainerMessage<DcmFileFormat> * m1)
 
 	key.set(0x0008,0x1030); //Study Description
 	
-	dataset->findAndGetString(key, badbuf, false);
-	if(badbuf==NULL || !strcmp(badbuf, "XXXXXXXX"))
+	dataset->findAndGetString(key, checkbuf, false);
+	if(checkbuf==NULL || !strcmp(checkbuf, "XXXXXXXX"))
 	{
 		ACE_OS::snprintf(buf, BUFSIZE, "%s", "Gadgetron^IEV");
 		WRITE_DCM_STRING(key, buf);
@@ -93,8 +101,8 @@ int AddSlopeIntercept::process(GadgetContainerMessage<DcmFileFormat> * m1)
 
 	 
 	key.set(0x0020,0x0010);//Study ID
-	dataset->findAndGetString(key, badbuf, false);
-	if(badbuf==NULL || !strcmp(badbuf, "XXXXXXXX"))
+	dataset->findAndGetString(key, checkbuf, false);
+	if(checkbuf==NULL || !strcmp(checkbuf, "XXXXXXXX"))
 	{
 		
 			WRITE_DCM_STRING(key, "1");
@@ -104,8 +112,8 @@ int AddSlopeIntercept::process(GadgetContainerMessage<DcmFileFormat> * m1)
 	
 	//Study UID should be created in IEVChannelSumGadget. 
 	key.set(0x0020,0x000D);//Study UID
-	dataset->findAndGetString(key, badbuf, false);
-	if(badbuf==NULL || !strcmp(badbuf, "XXXXXXXX"))
+	dataset->findAndGetString(key, checkbuf, false);
+	if(checkbuf==NULL || !strcmp(checkbuf, "XXXXXXXX"))
 	{
 		
 			WRITE_DCM_STRING(key, meta->getObjectPtr()->as_str("StudyInstanceUID"));
@@ -116,15 +124,15 @@ int AddSlopeIntercept::process(GadgetContainerMessage<DcmFileFormat> * m1)
 	std::strftime(buf, 100, "%Y%m%d", timeinfo);
 
 	key.set(0x0008,0x0020);//Study Date
-	dataset->findAndGetString(key, badbuf, false);
-	if(badbuf==NULL || !strcmp(badbuf, "19000101"))
+	dataset->findAndGetString(key, checkbuf, false);
+	if(checkbuf==NULL || !strcmp(checkbuf, "19000101"))
 	{
 		WRITE_DCM_STRING(key, buf);
 	}
 	
 	key.set(0x0008,0x0030);//Study Time
-	dataset->findAndGetString(key, badbuf, false);
-	if(badbuf==NULL || !strcmp(badbuf, "121212"))
+	dataset->findAndGetString(key, checkbuf, false);
+	if(checkbuf==NULL || !strcmp(checkbuf, "121212"))
 	{
 		WRITE_DCM_STRING(key, buf);
 	}
@@ -156,6 +164,12 @@ int AddSlopeIntercept::process(GadgetContainerMessage<DcmFileFormat> * m1)
 	{
 		WRITE_DCM_STRING(key, buf);
 	}	
+
+	key.set(0x0018,0x0081);//Echo Time
+
+	WRITE_DCM_STRING(key, meta->getObjectPtr()->as_str("TE"));
+
+
 
 	delete[] buf;
 

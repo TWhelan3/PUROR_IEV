@@ -80,22 +80,19 @@ int IEVChannelSumGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* 
 
 	GadgetContainerMessage<hoNDArray< float > > *filtered_unwrapped_msg_ptr =   AsContainerMessage<hoNDArray<float>>(unfiltered_unwrapped_msg_ptr->cont());
 	GadgetContainerMessage<ISMRMRD::MetaContainer> *meta;
-	if(filtered_unwrapped_msg_ptr)
-	{
-	 meta = AsContainerMessage<ISMRMRD::MetaContainer>(filtered_unwrapped_msg_ptr->cont());
-	 
-	 meta->getObjectPtr()->append("StudyInstanceUID", studyInstanceUID.c_str());//may be in xml header, may not be, in that case put it in xml so it can get to dicom
-	}
+	
 	static int c=0;	
 	int e;
 	int echo = m1->getObjectPtr()->contrast;
 	float inv_echo_time;
+
 	if(!filtered_unwrapped_msg_ptr || !unfiltered_unwrapped_msg_ptr)
 	{
 		GERROR("Wrong types received in IEVChannelSumGadget. Filtered and unfiltered phase expected.\n");
 		return GADGET_FAIL;
 	}
-
+	
+	 meta = AsContainerMessage<ISMRMRD::MetaContainer>(filtered_unwrapped_msg_ptr->cont());
 	
 	float* filtered_phase_ptr= filtered_unwrapped_msg_ptr->getObjectPtr()->get_data_ptr();
 	
@@ -111,6 +108,11 @@ int IEVChannelSumGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* 
 	
 	if(meta)
 	{
+		meta->getObjectPtr()->append("StudyInstanceUID", studyInstanceUID.c_str());//may be in xml header, may not be, in that case put it in xml so it can get to dicom
+		char TE[10];
+		sprintf(TE, "%f", echoTimes[echo]*1000);
+		meta->getObjectPtr()->append("TE", TE);
+
 		attributes[echo]=*(meta->getObjectPtr());
 	}
 	unfiltered_unwrapped_msg_ptr->release();//all data has been copied
