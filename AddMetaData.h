@@ -1,5 +1,5 @@
-#ifndef AddSlopeIntercept_H_
-#define AddSlopeIntercept_H_
+#ifndef AddMetaData_H_
+#define AddMetaData_H_
 
 #include "PUROR.h"
 #include <dcmtk/dcmdata/dcfilefo.h>
@@ -7,12 +7,12 @@
 #include <ismrmrd/xml.h>
 namespace Gadgetron{
 
-	class EXPORTGADGETSPUROR AddSlopeIntercept:
+	class EXPORTGADGETSPUROR AddMetaData:
 	public Gadget1<DcmFileFormat>
     	{
 	
 	public:
-		GADGET_DECLARE(AddSlopeIntercept);
+		GADGET_DECLARE(AddMetaData);
 
 		virtual int process_config(ACE_Message_Block*);
 		virtual int process(GadgetContainerMessage<DcmFileFormat> * m1);

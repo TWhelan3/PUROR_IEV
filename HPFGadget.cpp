@@ -101,6 +101,7 @@ int HPFGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 
 		for (int p = 0; p < xres*yres; p++) 
 		{
+		pixel[xres*yres*ch+p]=-pixel[xres*yres*ch+p];			//apply diagmagnetic convention
 		slicedata_ptr[p] = std::complex<float>(pixel[xres*yres*ch+p],0);
 		}
 		//The actual FFT won't happen in parallel, but the rest of the data processing can
@@ -124,7 +125,7 @@ int HPFGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 		
 		for (int p =0; p < xres*yres; p++) 
 		{
-			filtered_image[xres*yres*ch+p] = -pixel[xres*yres*ch+p] + slicedata_ptr[p].real(); //take out low freq signal, apply diagmagnetic convention
+			filtered_image[xres*yres*ch+p] = pixel[xres*yres*ch+p] - slicedata_ptr[p].real(); //take out low freq signal, 
 		}
 		
 			

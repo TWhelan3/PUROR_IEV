@@ -1,4 +1,4 @@
-//AddSlopeIntercept.cpp
+//AddMetaData.cpp
 //Written by Tim Whelan 2015
 //Input ImageHeader-> ???
 //Output ImageHeader-> ??? 
@@ -6,13 +6,13 @@
 #include "DicomFinishGadget.h"
 namespace Gadgetron{
 
-int AddSlopeIntercept::process_config(ACE_Message_Block* mb)
+int AddMetaData::process_config(ACE_Message_Block* mb)
 {
 
 	return GADGET_OK;
 }
 
-int AddSlopeIntercept::process(GadgetContainerMessage<DcmFileFormat> * m1)
+int AddMetaData::process(GadgetContainerMessage<DcmFileFormat> * m1)
 {
 
 	DcmFileFormat * dcm = m1->getObjectPtr();
@@ -184,5 +184,5 @@ int AddSlopeIntercept::process(GadgetContainerMessage<DcmFileFormat> * m1)
 	}
 	return GADGET_OK;
 }
-GADGET_FACTORY_DECLARE(AddSlopeIntercept)
+GADGET_FACTORY_DECLARE(AddMetaData)
 }
