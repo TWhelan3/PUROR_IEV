@@ -37,7 +37,7 @@ int HPFGadget::process_config(ACE_Message_Block* mb)
 		F[i].resize(yres);
 	}
 		
-	float sigma2=sigma.value()*sigma.value();
+	float sigma2=2*sigma.value()*sigma.value();
 	for(int i=0; i<xres; i++)
 	{
 		for(int j=0; j<yres; j++)
