@@ -40,7 +40,7 @@ int IEVChannelSumGadget::process_config(ACE_Message_Block* mb)
 	//try to open file
 	int pos;
 	
-	std::fstream log("series_number_log");
+	std::fstream log("../series_number_log");
 	series_id_offset=99;
 	//see if number is there
 	if(log.is_open())
