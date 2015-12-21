@@ -78,7 +78,7 @@ int main(int argc, char *argv[]){//take the filename as an argument
 	xml_output<<reader<<value;							//if triggered, output the new value line
 
 	//Add output file for single channel data
-	tofollow = "<name>filename</name>"
+	tofollow = "<name>filename</name>";
 	value = starttag + fileNameBase+ "_INDIVIDUAL.ismrmrd" + endtag;	//<value>xyz_INDIVIDUAL.ismrmrd</value>
 	std::getline(base_xml, reader);
 	pos=reader.find_first_of("<");
@@ -147,7 +147,7 @@ int main(int argc, char *argv[]){//take the filename as an argument
 	std::string run_minutes=std::to_string(ceil(run_minutes_d));
 	char run_gigs[]="8";//how am I going to figure this out? 
 	//std::cout<<x<<" "<<y<<" "<<z<<" "<<num_echos<<" "<<num_chan<<" "<<run_minutes_d <<" "<<run_minutes<<" "<<run_gigs<<std::endl;	
-	if(execl("/home/twhelan5/gadgetron/scripts/submitscript", "submitscript", fileNameBase.c_str(),run_minutes.c_str(),run_gigs,  0)==-1) //run the program
+	if(execl("/work/twhelan5/local/bin/submitscript", "submitscript", fileNameBase.c_str(),run_minutes.c_str(),run_gigs,  0)==-1) //run the program
 		std::cout<<"Whoops"<<std::endl;
 	
 		
