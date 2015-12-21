@@ -59,7 +59,7 @@ int IEVChannelSumGadget::process_config(ACE_Message_Block* mb)
 	}
 		
 	//if file doesn't exist, it will be created	
-	log.open("series_number_log", std::fstream::app | std::fstream::out);
+	log.open("../series_number_log", std::fstream::app | std::fstream::out);
 	log<<studyInstanceUID<<":"<<series_id_offset+output_phase.value()+output_LFS.value()<<std::endl;
 	log.close();
 
