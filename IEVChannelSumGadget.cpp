@@ -226,12 +226,12 @@ int IEVChannelSumGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* 
 				//	
 				for (int i = 0; i < xres*yres; i++)
 				{
-				output_ptr[i]=unfiltered_phase_ptr[e*xres*yres*num_ch+i]*channel_weights[0][i]; //instead of setting to 0 and adding first channel
+				output_ptr[i]=filtered_phase_ptr[e*xres*yres*num_ch+i]*channel_weights[0][i]; //instead of setting to 0 and adding first channel
 				}
 				for(int ch=1; ch< num_ch; ch++)	
 					for (int i = 0; i < xres*yres; i++)
 					{
-						output_ptr[i]+=unfiltered_phase_ptr[e*xres*yres*num_ch+xres*yres*ch+i]*channel_weights[ch][i];; //instead of setting to 0 and adding first channel
+						output_ptr[i]+=filtered_phase_ptr[e*xres*yres*num_ch+xres*yres*ch+i]*channel_weights[ch][i];; //instead of setting to 0 and adding first channel
 					}						
 				//
 				if(meta)
