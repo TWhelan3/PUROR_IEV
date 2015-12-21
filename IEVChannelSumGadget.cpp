@@ -66,7 +66,7 @@ int IEVChannelSumGadget::process_config(ACE_Message_Block* mb)
 
 	freq_ptr=new float[xres*yres*num_ch*numEchos];
 		
-	unfiltered_phase_ptr=new float[xres*yres*num_ch*numEchos];
+	//unfiltered_phase_ptr=new float[xres*yres*num_ch*numEchos];
 
 	hdr_ptr=new ISMRMRD::ImageHeader[numEchos];
 	
@@ -99,7 +99,7 @@ int IEVChannelSumGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* 
 	m1->getObjectPtr()->channels=1; //yes?
 	inv_echo_time=1/echoTimes[echo];//to avoid millions of divisions per slice
 
-	memcpy(unfiltered_phase_ptr+yres*xres*num_ch*echo, unfiltered_unwrapped_msg_ptr->getObjectPtr()->get_data_ptr(), xres*yres*num_ch*sizeof(float));
+	//memcpy(unfiltered_phase_ptr+yres*xres*num_ch*echo, unfiltered_unwrapped_msg_ptr->getObjectPtr()->get_data_ptr(), xres*yres*num_ch*sizeof(float));
 	
 	for (int i = 0; i < xres*yres*num_ch; i++) 
 		freq_ptr[echo*xres*yres*num_ch+i] = filtered_phase_ptr[i]*inv_echo_time;
@@ -226,12 +226,12 @@ int IEVChannelSumGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* 
 				//	
 				for (int i = 0; i < xres*yres; i++)
 				{
-				output_ptr[i]=filtered_phase_ptr[e*xres*yres*num_ch+i]*channel_weights[0][i]; //instead of setting to 0 and adding first channel
+				output_ptr[i]=filtered_phase_ptr[i]*channel_weights[0][i]; //instead of setting to 0 and adding first channel
 				}
 				for(int ch=1; ch< num_ch; ch++)	
 					for (int i = 0; i < xres*yres; i++)
 					{
-						output_ptr[i]+=filtered_phase_ptr[e*xres*yres*num_ch+xres*yres*ch+i]*channel_weights[ch][i];; //instead of setting to 0 and adding first channel
+						output_ptr[i]+=filtered_phase_ptr[xres*yres*ch+i]*channel_weights[ch][i];; //instead of setting to 0 and adding first channel
 					}						
 				//
 				if(meta)
