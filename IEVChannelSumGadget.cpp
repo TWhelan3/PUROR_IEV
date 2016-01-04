@@ -1,7 +1,7 @@
 //Unwrap3DGadget.cpp
 //Written by Tim Whelan 2015
-//Input ImageHeader->Float 3D Array (Phase Data) -> // Int 3D Array (Support Mask) -> [Int 3D Array (Support Mask)] -> [MetaContainer]
-//Output ImageHeader->Float 3D Array (Filtered Phase Data) -> Float 3D Array (Unfiltered Phase Data) -> [MetaContainer] 
+//Input ImageHeader->Float 3D Array (Unfiltered Phase Data) -> Float 3D Array (Filtered Phase Data) -> [MetaContainer] 
+//Output ImageHeader->Float 3D Array (Phase or LFS Data) -> [MetaContainer]
 
 #include "IEVChannelSumGadget.h"
 
@@ -66,7 +66,7 @@ int IEVChannelSumGadget::process_config(ACE_Message_Block* mb)
 
 	freq_ptr=new float[xres*yres*num_ch*numEchos];
 		
-	//unfiltered_phase_ptr=new float[xres*yres*num_ch*numEchos];
+	filtered_phase_ptr=new float[xres*yres*num_ch*numEchos];
 
 	hdr_ptr=new ISMRMRD::ImageHeader[numEchos];
 	
@@ -94,12 +94,12 @@ int IEVChannelSumGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* 
 	
 	 meta = AsContainerMessage<ISMRMRD::MetaContainer>(filtered_unwrapped_msg_ptr->cont());
 	
-	float* filtered_phase_ptr= filtered_unwrapped_msg_ptr->getObjectPtr()->get_data_ptr();
+	//float* filtered_phase_ptr= filtered_unwrapped_msg_ptr->getObjectPtr()->get_data_ptr();
 	
 	m1->getObjectPtr()->channels=1; //yes?
 	inv_echo_time=1/echoTimes[echo];//to avoid millions of divisions per slice
 
-	//memcpy(unfiltered_phase_ptr+yres*xres*num_ch*echo, unfiltered_unwrapped_msg_ptr->getObjectPtr()->get_data_ptr(), xres*yres*num_ch*sizeof(float));
+	memcpy(filtered_phase_ptr+yres*xres*num_ch*echo, filtered_unwrapped_msg_ptr->getObjectPtr()->get_data_ptr(), xres*yres*num_ch*sizeof(float));
 	
 	for (int i = 0; i < xres*yres*num_ch; i++) 
 		freq_ptr[echo*xres*yres*num_ch+i] = filtered_phase_ptr[i]*inv_echo_time;
@@ -115,7 +115,7 @@ int IEVChannelSumGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* 
 
 		attributes[echo]=*(meta->getObjectPtr());
 	}
-	unfiltered_unwrapped_msg_ptr->release();//all data has been copied
+	unfiltered_unwrapped_msg_ptr->release();//all data have been copied
 	if(echo==(numEchos-1))
 	{	
 		
@@ -189,19 +189,6 @@ int IEVChannelSumGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* 
 		for(e=0; e<numEchos; e++)
 		{
 
-			//GadgetContainerMessage<ISMRMRD::ImageHeader>* h1 = new GadgetContainerMessage<ISMRMRD::ImageHeader>(hdr_ptr[e]);
-		
-			
-			//GadgetContainerMessage<hoNDArray< float > > *outimage = new GadgetContainerMessage<hoNDArray< float > >();
-		
-			/*try{outimage->getObjectPtr()->create(xres,yres);}	
-
-			catch (std::runtime_error &err){
-			GEXCEPTION(err,"Unable to create output image\n");
-			return GADGET_FAIL;  
-			}*/
-			
-			//float* output_ptr=outimage->getObjectPtr()->get_data_ptr();
 			hdr_ptr[e].channels=1;
 			hdr_ptr[e].contrast=e;
 			hdr_ptr[e].data_type = ISMRMRD::ISMRMRD_FLOAT;//GADGET_IMAGE_REAL_FLOAT;
@@ -226,12 +213,12 @@ int IEVChannelSumGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* 
 				//	
 				for (int i = 0; i < xres*yres; i++)
 				{
-				output_ptr[i]=filtered_phase_ptr[i]*channel_weights[0][i]; //instead of setting to 0 and adding first channel
+				output_ptr[i]=filtered_phase_ptr[e*xres*yres*num_ch+i]*channel_weights[0][i]; //instead of setting to 0 and adding first channel
 				}
 				for(int ch=1; ch< num_ch; ch++)	
 					for (int i = 0; i < xres*yres; i++)
 					{
-						output_ptr[i]+=filtered_phase_ptr[xres*yres*ch+i]*channel_weights[ch][i];; //instead of setting to 0 and adding first channel
+						output_ptr[i]+=filtered_phase_ptr[e*xres*yres*num_ch+xres*yres*ch+i]*channel_weights[ch][i];; //instead of setting to 0 and adding first channel
 					}						
 				//
 				if(meta)
