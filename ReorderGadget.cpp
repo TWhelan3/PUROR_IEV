@@ -10,8 +10,8 @@ namespace Gadgetron{
 
 int ReorderGadget::process_config(ACE_Message_Block* mb)
 {
-	 boost::filesystem::remove("/tmp/temp.ismrmrd");
-	temp_storage = new ISMRMRD::Dataset("/tmp/temp.ismrmrd","storage", true);
+	// boost::filesystem::remove("/tmp/temp.ismrmrd");
+	//temp_storage = new ISMRMRD::Dataset("/tmp/temp.ismrmrd","storage", true);
 	this->msg_queue()->high_water_mark(128);//This helps with memory. It's not a hard limit though. 
 	ISMRMRD::IsmrmrdHeader hdr;
         ISMRMRD::deserialize(mb->rd_ptr(),hdr);
@@ -74,8 +74,8 @@ int ReorderGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 	static int myplace=0;
 
 	ordering[header->image_index]=myplace++;//would be better to organize by position
-	temp_storage->appendImage("here", image);
-
+	//temp_storage->appendImage("here", image);
+	unordered_images.push_back(image);
 	m1->release();
 	
 	for(int v=0; v<numVol.value(); v++)//better way than for loop? maybe remove below to another function?
@@ -98,13 +98,15 @@ int ReorderGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 			for(int j=0; j<num_echos; j++)//number of echos/contrast
 			{
 				 // Read the image
-				 try {
+				/* try {
 				    temp_storage->readImage("here", ordering[j*num_slices+i], image);///number of slices 				 
 				 }
 				 catch (std::exception &ex) {
 				    GERROR("Error reading image %d\n",i);
 				    return GADGET_FAIL;
-				 }
+				 }*/
+				
+				image=unordered_images[ordering[j*num_slices+i]];
 				 GadgetContainerMessage<ISMRMRD::ImageHeader>* mheader = new GadgetContainerMessage<ISMRMRD::ImageHeader >();
 				  header = mheader->getObjectPtr();
 				 *header = image.getHead();

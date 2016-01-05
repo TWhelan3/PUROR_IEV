@@ -22,7 +22,7 @@ public Gadget1<ISMRMRD::ImageHeader>
 		
 	std::vector<int> ordering;//how would I get this from inputs?
 	std::vector<int> VolumeEnds;
-	std::vector<std::vector<std::vector<float>>> slice_mean;
+	std::vector<ISMRMRD::Image<float>> unordered_images;
 	GADGET_PROPERTY(limits, std::string, "Ends of Volumes", "");
 	GADGET_PROPERTY(numVol, int, "Number of Volumes", 1);
 

@@ -17,6 +17,8 @@ int UnwrapGadget::process_config(ACE_Message_Block* mb)
 
 	yres=hdr.encoding[0].reconSpace.matrixSize.x; //match my (and MATLABs) unfortunate convention 
 	xres=hdr.encoding[0].reconSpace.matrixSize.y;
+	num_echos=hdr.encoding[0].encodingLimits.contrast().maximum +1;
+
 
 	if(hdr.subjectInformation.is_present())
 	{
@@ -270,7 +272,7 @@ int UnwrapGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 	}
 
 	
-	if(myid%24==0)//debugging value, shows approximately how long to do four sets of six echos
+	if(myid%(num_echos*4)==0)//debugging value, shows approximately how long to do four sets of echos
 	GINFO("Unwrapped %d \n",new_header_msg->getObjectPtr()->image_index);
 	++myid;
 	//m2->cont(NULL);//necessary so masks don't get deleted and stay connected. Release removes links further down chain. Uncomment for 3D

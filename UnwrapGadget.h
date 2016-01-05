@@ -24,7 +24,8 @@ public Gadget1<ISMRMRD::ImageHeader>
 	int xres;
 	int yres;
 	int num_ch;
-	
+	int num_echos;	
+
 	float q_th; //might want to set this is config
 
 
