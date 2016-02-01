@@ -33,24 +33,9 @@
 		 <property><name>threads</name><value>6</value></property>
 	</gadget>
 	<gadget>
-		<name>SaveIsmrmrdDatasetImages</name>
-		<dll>cfmm_gadgets</dll>
-		<classname>SaveIsmrmrdDatasetImages</classname>
-		<property>
-			<name>filename</name>
-		</property>
-		<property>
-			<name>groupname</name>
-			<value>images</value>
-		</property>
-		<property>
-			<name>varname</name>
-			<value>phase</value>
-		</property>
-		<property>
-			<name>pass_on_undesired_data</name>
-			<value>true</value>
-		</property>
+		<name>Reorder</name>
+		<dll>gadgetron_PUROR</dll>
+		<classname>ReorderGadget</classname>
 	</gadget>
 	<gadget>
 		<name>HighPassFilter</name>
@@ -67,18 +52,9 @@
 		<classname>IEVChannelSumGadget</classname>
 	</gadget>
 <!--	<gadget>
-		<name>AddMag</name>
+		<name>Flip</name>
 		<dll>gadgetron_PUROR</dll>
-		<classname>AddMag</classname>
-	</gadget>
-	<gadget>
-		<name>Contrast</name>
-		<dll>gadgetron_PUROR</dll>
-		<classname>ContrastGadget</classname>
-		<property>
-			<name>pass_on</name>
-			<value>1</value>
-		</property>
+		<classname>FlipGadget</classname>
 	</gadget>-->
 	<gadget>
 		<name>AutoScaleEntireImage</name>
@@ -103,11 +79,60 @@
 		<classname>AddMetaData</classname>
 	</gadget>
 	<gadget>
-		<name>DICOMSave</name>
+		<name>DICOMSend</name>
 		<dll>cfmm_gadgets</dll>
-		<classname>DicomSave</classname>
+		<classname>DicomSend</classname>
 		<property>
-		<name>dicom_dir</name>
-		</property>
+                <name>peerHostName</name>
+                <value>dicom-public.imaging.robarts.ca</value>
+         </property>
+         <property>
+                <name>peerPort</name>
+                <value>11115</value>
+         </property>
+        <property>
+               <name>peerAETitle</name>
+               <value>CFMM-Public</value>
+        </property>
+        <property>
+               <name>callingAETitle</name>
+               <value>GADGETRON</value>
+         </property>
+       	<property>
+            	<name>dcmPrivateKey</name>
+            	<value>/work/twhelan5/PUROR_IEV/key.pem</value>
+        </property>
+        <property>
+           	<name>dcmCertFile</name>
+           	<value>/work/twhelan5/PUROR_IEV/cert.pem</value>
+        </property>
+        <property>
+        	<name>dcmPassphrase</name>
+       		<value>gadgetron_sharcnet_client</value>
+        </property>
+ 	<property>
+        	<name>username</name>
+               	<value>twhelan5</value>
+        </property>
+      	<property>
+            	<name>privateKey</name>
+            	<value>/home/twhelan5/.ssh/intercluster</value>
+      	</property>
+     	<property>
+         	<name>localHost</name>
+         	<value>127.0.0.1</value>
+     	 </property>
+      	<property>
+         	<name>localPort</name>
+         	<value>11112</value>
+      	</property>
+     	 <property>
+          	<name>forwardHost</name>
+		<value>10.16.1.38</value>
+      	</property>
+      	<property>
+        	 <name>forwardPort</name>
+         	<value>22</value>
+     	 </property>
 	</gadget>
 </gadgetronStreamConfiguration>

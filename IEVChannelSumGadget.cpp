@@ -102,7 +102,7 @@ int IEVChannelSumGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* 
 	memcpy(filtered_phase_ptr+yres*xres*num_ch*echo, filtered_unwrapped_msg_ptr->getObjectPtr()->get_data_ptr(), xres*yres*num_ch*sizeof(float));
 	
 	for (int i = 0; i < xres*yres*num_ch; i++) 
-		freq_ptr[echo*xres*yres*num_ch+i] = filtered_phase_ptr[i]*inv_echo_time;
+		freq_ptr[echo*xres*yres*num_ch+i] = filtered_phase_ptr[echo*xres*yres*num_ch+i]*inv_echo_time;
 
 	hdr_ptr[echo]=*(m1->getObjectPtr());
 	

@@ -78,17 +78,17 @@ int main(int argc, char *argv[]){//take the filename as an argument
 	xml_output<<reader<<value;							//if triggered, output the new value line
 
 	//Add output file for single channel data
-	tofollow = "<name>filename</name>";
-	value = starttag + fileNameBase+ "_INDIVIDUAL.ismrmrd" + endtag;	//<value>xyz_INDIVIDUAL.ismrmrd</value>
-	std::getline(base_xml, reader);
-	pos=reader.find_first_of("<");
+//	tofollow = "<name>filename</name>";
+//	value = starttag + fileNameBase+ "_INDIVIDUAL.ismrmrd" + endtag;	//<value>xyz_INDIVIDUAL.ismrmrd</value>
+//	std::getline(base_xml, reader);
+//	pos=reader.find_first_of("<");
 	
-	while(reader.substr(pos,std::string::npos).compare(tofollow)!=0){		//read line and compare to trigger line
-		xml_output<<reader<<std::endl;							//copy
-		std::getline(base_xml, reader);							//get next line
-		pos=reader.find_first_of("<");							//find first <
-	}
-	xml_output<<reader<<value;
+//	while(reader.substr(pos,std::string::npos).compare(tofollow)!=0){		//read line and compare to trigger line
+//		xml_output<<reader<<std::endl;							//copy
+//		std::getline(base_xml, reader);							//get next line
+//		pos=reader.find_first_of("<");							//find first <
+//	}
+//	xml_output<<reader<<value;
 
 
 	long int num_echos=hdr.encoding[0].encodingLimits.contrast().maximum+1;		//0 based and we are adding a cumulative average
@@ -107,7 +107,7 @@ int main(int argc, char *argv[]){//take the filename as an argument
 
 	//Add output file to xml as SaveDICOM's filename parameter
 
-	tofollow = "<name>dicom_dir</name>";
+/*	tofollow = "<name>dicom_dir</name>";
 	value = starttag + fileNameBase+ ".dicom" + endtag;		//<value>xyz.dicom</value>
 	std::getline(base_xml, reader);
 	pos=reader.find_first_of("<");
@@ -118,7 +118,7 @@ int main(int argc, char *argv[]){//take the filename as an argument
 		pos=reader.find_first_of("<");							//find first <
 		
 	}
-	xml_output<<reader<<value;
+	xml_output<<reader<<value;*/
 
 	//look for end of file, and copy until it's found
 	tofollow = "</gadgetronStreamConfiguration>";					
