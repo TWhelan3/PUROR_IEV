@@ -16,9 +16,10 @@ namespace Gadgetron{
 
 		virtual int process_config(ACE_Message_Block*);
 		virtual int process(GadgetContainerMessage<DcmFileFormat> * m1);
-		GADGET_PROPERTY(intercept, float, "Intercept for Dicom", 0);
-		GADGET_PROPERTY(slope, float, "Slope for Dicom", 0);
-	
+
+		float pixel_spacing_X;
+        	float pixel_spacing_Y;
+       		float slice_spacing;
 		char generatedStudyUID[64];
 	};
 
