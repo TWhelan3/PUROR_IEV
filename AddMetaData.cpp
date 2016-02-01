@@ -8,6 +8,17 @@ namespace Gadgetron{
 
 int AddMetaData::process_config(ACE_Message_Block* mb)
 {
+	//taken from DicomFixMetaData
+	ISMRMRD::IsmrmrdHeader m_oIsmrmrdHdr;
+        deserialize(mb->rd_ptr(), hdr);
+        
+        //Fix incorrectly stored parameters
+        //pixel spacing
+        ISMRMRD::EncodingSpace r_space = m_oIsmrmrdHdr.encoding[0].reconSpace;
+        pixel_spacing_X = r_space.fieldOfView_mm.x / r_space.matrixSize.x;
+        pixel_spacing_Y = r_space.fieldOfView_mm.y / r_space.matrixSize.y;
+        
+        slice_spacing = r_space.fieldOfView_mm.z / r_space.matrixSize.z;
 
 	return GADGET_OK;
 }
@@ -74,6 +85,13 @@ int AddMetaData::process(GadgetContainerMessage<DcmFileFormat> * m1)
 	key.set(0x0028,0x1053);
 	ACE_OS::snprintf(buf, BUFSIZE, "%f", rescaleSlope);//meta->getObjectPtr()->as_double("Intercept"));
 	WRITE_DCM_STRING(key, buf);
+
+
+	key.set(0x0028, 0x0030);
+        ACE_OS::snprintf(buf, BUFSIZE, "%.6f\\%.6f", pixel_spacing_Y, pixel_spacing_X);
+	WRITE_DCM_STRING(key, buf);
+
+
 
 	key.set(0x0008,0x1030); //Study Description
 	
