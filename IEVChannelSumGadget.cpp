@@ -104,6 +104,7 @@ int IEVChannelSumGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* 
 	memcpy(filtered_phase_ptr+echo_offset, filtered_unwrapped_msg_ptr->getObjectPtr()->get_data_ptr(), xres*yres*num_ch*sizeof(float));
 	
 	for (int i = 0; i < xres*yres*num_ch; i++) 
+
 		freq_ptr[echo_offset+i] = filtered_phase_ptr[echo_offset+i]*inv_echo_time;
 
 	hdr_ptr[echo]=*(m1->getObjectPtr());
