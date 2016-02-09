@@ -86,6 +86,8 @@ int IEVChannelSumGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* 
 	int echo = m1->getObjectPtr()->contrast;
 	float inv_echo_time;
 
+	int echo_offset=yres*xres*num_ch*echo;
+
 	if(!filtered_unwrapped_msg_ptr || !unfiltered_unwrapped_msg_ptr)
 	{
 		GERROR("Wrong types received in IEVChannelSumGadget. Filtered and unfiltered phase expected.\n");
@@ -99,10 +101,10 @@ int IEVChannelSumGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* 
 	m1->getObjectPtr()->channels=1; //yes?
 	inv_echo_time=1/echoTimes[echo];//to avoid millions of divisions per slice
 
-	memcpy(filtered_phase_ptr+yres*xres*num_ch*echo, filtered_unwrapped_msg_ptr->getObjectPtr()->get_data_ptr(), xres*yres*num_ch*sizeof(float));
+	memcpy(filtered_phase_ptr+echo_offset, filtered_unwrapped_msg_ptr->getObjectPtr()->get_data_ptr(), xres*yres*num_ch*sizeof(float));
 	
 	for (int i = 0; i < xres*yres*num_ch; i++) 
-		freq_ptr[echo*xres*yres*num_ch+i] = filtered_phase_ptr[i]*inv_echo_time;
+		freq_ptr[echo_offset+i] = filtered_phase_ptr[echo_offset+i]*inv_echo_time;
 
 	hdr_ptr[echo]=*(m1->getObjectPtr());
 	
