@@ -14,7 +14,7 @@ int AddMetaData::process_config(ACE_Message_Block* mb)
         
         //Fix incorrectly stored parameters
         //pixel spacing
-        ISMRMRD::EncodingSpace r_space =hdr.encoding[0].reconSpace;
+        ISMRMRD::EncodingSpace r_space = hdr.encoding[0].reconSpace;
         pixel_spacing_X = r_space.fieldOfView_mm.x / r_space.matrixSize.x;
         pixel_spacing_Y = r_space.fieldOfView_mm.y / r_space.matrixSize.y;
         
@@ -57,13 +57,21 @@ int AddMetaData::process(GadgetContainerMessage<DcmFileFormat> * m1)
 	DcmTagKey key;
 	DcmDataset *dataset = dcm->getDataset();
 
-	float rescaleIntercept=	meta->getObjectPtr()->as_double(GADGETRON_IMAGE_SCALE_OFFSET);
-	float rescaleSlope=	meta->getObjectPtr()->as_double(GADGETRON_IMAGE_SCALE_RATIO);
+	float rescaleIntercept;//=	meta->getObjectPtr()->as_double(GADGETRON_IMAGE_SCALE_OFFSET);
+	float rescaleSlope;//=	meta->getObjectPtr()->as_double(GADGETRON_IMAGE_SCALE_RATIO);
+
 
 	static bool studyUIDmade=false;
 	std::time_t rawtime;
          std::time(&rawtime);
          std::tm *timeinfo = std::localtime(&rawtime);
+
+	if(meta->getObjectPtr()->exists("GADGETRON_IMAGE_SCALE_OFFSET") && meta->getObjectPtr()->exists("GADGETRON_IMAGE_SCALE_RATIO"))
+	{
+		rescaleIntercept=meta->getObjectPtr()->as_double(GADGETRON_IMAGE_SCALE_OFFSET);
+		rescaleIntercept=meta->getObjectPtr()->as_double(GADGETRON_IMAGE_SCALE_OFFSET);
+	
+
 
 	 // Window Center
         key.set(0x0028, 0x1050);
@@ -72,6 +80,8 @@ int AddMetaData::process(GadgetContainerMessage<DcmFileFormat> * m1)
         // Window Width
         key.set(0x0028, 0x1051);
         dataset->remove(key);
+
+	
 	
 
 	rescaleIntercept = -1.0*rescaleIntercept*rescaleSlope;
@@ -90,7 +100,7 @@ int AddMetaData::process(GadgetContainerMessage<DcmFileFormat> * m1)
 	key.set(0x0028, 0x0030);
         ACE_OS::snprintf(buf, BUFSIZE, "%.6f\\%.6f", pixel_spacing_Y, pixel_spacing_X);
 	WRITE_DCM_STRING(key, buf);
-
+	}
 
 
 	key.set(0x0008,0x1030); //Study Description

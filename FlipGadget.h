@@ -26,6 +26,7 @@ public Gadget1<ISMRMRD::ImageHeader>
 	int xres;
 	int yres;
 	
+	bool read_flip, phase_flip, swap;
 
 	int numEchos;
 	int numChan;

@@ -42,7 +42,7 @@ int main(int argc, char *argv[]){//take the filename as an argument
 	posb=fileNameBase.find_last_of("/");
 	if(posb==-1)
 		posb=0;
-	fileNameBase = fileNameBase.substr(posb,pos);
+	fileNameBase = fileNameBase.substr(posb+1,pos-posb-1);
 
 	new_xml=fileNameBase+".xml";		//cut off .ismrmrd and add .xml
 	
