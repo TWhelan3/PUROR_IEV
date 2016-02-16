@@ -9,12 +9,12 @@ namespace Gadgetron{
 int AddMetaData::process_config(ACE_Message_Block* mb)
 {
 	//taken from DicomFixMetaData
-	ISMRMRD::IsmrmrdHeader m_oIsmrmrdHdr;
+	ISMRMRD::IsmrmrdHeader hdr;
         deserialize(mb->rd_ptr(), hdr);
         
         //Fix incorrectly stored parameters
         //pixel spacing
-        ISMRMRD::EncodingSpace r_space = m_oIsmrmrdHdr.encoding[0].reconSpace;
+        ISMRMRD::EncodingSpace r_space =hdr.encoding[0].reconSpace;
         pixel_spacing_X = r_space.fieldOfView_mm.x / r_space.matrixSize.x;
         pixel_spacing_Y = r_space.fieldOfView_mm.y / r_space.matrixSize.y;
         
