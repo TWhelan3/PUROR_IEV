@@ -38,13 +38,14 @@ int main(int argc, char *argv[]){//take the filename as an argument
 	std::string tofollow; 				//trigger line
 	std::string fileNameBase= argv[1];		//name for new file(s)
 
-	pos=fileNameBase.find_first_of(".");
+	pos=fileNameBase.find_last_of(".");
 	posb=fileNameBase.find_last_of("/");
-	if(posb==-1)
-		posb=0;
+
 	fileNameBase = fileNameBase.substr(posb+1,pos-posb-1);
 
 	new_xml=fileNameBase+".xml";		//cut off .ismrmrd and add .xml
+
+	std::cout<<new_xml<<std::endl;
 	
 	std::ifstream base_xml("/work/twhelan5/PUROR_IEV/base.xml");
 	if(!base_xml.is_open())
@@ -141,11 +142,14 @@ int main(int argc, char *argv[]){//take the filename as an argument
 	long int x = hdr.encoding[0].reconSpace.matrixSize.x;
 	long int y = hdr.encoding[0].reconSpace.matrixSize.y;
 	long int z = hdr.encoding[0].reconSpace.matrixSize.z;
-	double run_minutes_d = x*y*z*num_echos*num_chan/120000000.0;
+	//double run_minutes_d = x*y*z*num_echos*num_chan/120000000.0;
+	
+	double run_minutes_d = z*num_echos*num_chan/500; //x and y are probably 168 and 224. With integrated sending, 'processing' takes longer
+	
 	if(run_minutes_d<5)
 		run_minutes_d=5; 
 	std::string run_minutes=std::to_string(ceil(run_minutes_d));
-	char run_gigs[]="8";//how am I going to figure this out? 
+	char run_gigs[]="8";//This is reasonable for the scans coming through, but could change. 
 	//std::cout<<x<<" "<<y<<" "<<z<<" "<<num_echos<<" "<<num_chan<<" "<<run_minutes_d <<" "<<run_minutes<<" "<<run_gigs<<std::endl;	
 	if(execl("/work/twhelan5/local/bin/submitscript", "submitscript", fileNameBase.c_str(),run_minutes.c_str(),run_gigs,  0)==-1) //run the program
 		std::cout<<"Whoops"<<std::endl;

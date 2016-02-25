@@ -32,11 +32,11 @@
 		<classname>UnwrapGadget</classname>
 		 <property><name>threads</name><value>6</value></property>
 	</gadget>
-	<gadget>
+	<!--<gadget>
 		<name>Reorder</name>
 		<dll>gadgetron_PUROR</dll>
 		<classname>ReorderGadget</classname>
-	</gadget>
+	</gadget>-->
 	<gadget>
 		<name>HighPassFilter</name>
 		<dll>gadgetron_PUROR</dll>
