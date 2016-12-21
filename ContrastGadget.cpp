@@ -12,7 +12,7 @@ int ContrastGadget::process_config(ACE_Message_Block* mb)
 {
 	this->msg_queue()->high_water_mark(128);//This helps with memory. It's not a hard limit though. 
 	ISMRMRD::IsmrmrdHeader hdr;
-        ISMRMRD::deserialize(mb->rd_ptr(),hdr);
+	ISMRMRD::deserialize(mb->rd_ptr(),hdr);
 	numEchos=hdr.encoding[0].encodingLimits.contrast().maximum +1; //number of echos is one more than highest numbers (0-based)
 	numSlices=hdr.encoding[0].reconSpace.matrixSize.z; //number of slices (will this always work?)
 
@@ -38,20 +38,20 @@ int ContrastGadget::process_config(ACE_Message_Block* mb)
 }
 int ContrastGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 {
-	GadgetContainerMessage<hoNDArray< float > > *image_message =     AsContainerMessage<hoNDArray<float>>(m1->cont());
+	GadgetContainerMessage<hoNDArray< float > > *image_message = AsContainerMessage<hoNDArray<float>>(m1->cont());
 	GadgetContainerMessage<ISMRMRD::MetaContainer> *meta = AsContainerMessage<ISMRMRD::MetaContainer>(image_message->cont());
-	
+
 	if(!image_message){
 		GERROR("Phase array (float/single) expected and not found.\n");
-		
+
 		return GADGET_FAIL;
 	}
-	int echo = m1->getObjectPtr()->contrast;	
+	int echo = m1->getObjectPtr()->contrast;
 	float* image_pixels = image_message->getObjectPtr()->get_data_ptr();
-	
+
 	std::string type = meta->getObjectPtr()->as_str(GADGETRON_DATA_ROLE);
 	int typeIndex;
-	bool found=false;	
+	bool found=false;
 	int ii;
 	for(ii=0; ii<types.size(); ii++)
 		if(strcmp(types[ii].c_str(),type.c_str())==0)
@@ -65,7 +65,7 @@ int ContrastGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 	{
 		types.push_back(type);
 		sum_arrays.push_back(new hoNDArray<float>());
-		
+
 		try{sum_arrays[typeIndex]->create(numPixels);}
 		catch (std::runtime_error &err){
 		GEXCEPTION(err,"Unable to create mag_sum space.\n");
@@ -74,7 +74,7 @@ int ContrastGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 	}
 
 
-	float* dst_ptr=sum_arrays[typeIndex]->get_data_ptr();	
+	float* dst_ptr=sum_arrays[typeIndex]->get_data_ptr();
 
 	if(echo==0)
 	{
@@ -82,14 +82,13 @@ int ContrastGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 	}
 	else
 	{
-		#pragma omp parallel for	
+		#pragma omp parallel for
 		for (int i = 0; i < numPixels; i++)
 		{
-	  	dst_ptr[i]+=image_pixels[i];		
+			dst_ptr[i]+=image_pixels[i];
 		}
-			
+
 	}
-	
 
 	/*
 	if(echo==0)
@@ -103,21 +102,21 @@ int ContrastGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 	}
 	else
 	{
-		
+
 		if(m1->getObjectPtr()->image_type==ISMRMRD::ISMRMRD_IMTYPE_MAGNITUDE)
 		{
-			#pragma omp parallel for	
+			#pragma omp parallel for
 			for (int i = 0; i < numPixels; i++)
 			{
-		  	mag_sum_ptr[i]+=image_pixels[i];		
+				mag_sum_ptr[i]+=image_pixels[i];
 			}
 		}
 		else
-		{	
+		{
 			#pragma omp parallel for 
 			for (int i = 0; i < numPixels; i++)
 			{
-		  	phase_sum_ptr[i]+=image_pixels[i];		
+				phase_sum_ptr[i]+=image_pixels[i];
 			}
 		}
 	}*/
@@ -127,11 +126,11 @@ int ContrastGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 		GERROR("Unable to put phase_sum images on next gadgets queue.\n");
 		return GADGET_FAIL;
 	}
-	
+
 
 	if(echo==(numEchos-1))//if(echo==(numEchos-1)||echo==(numEchos+129))//Phase or Magnitude
-	{	
-		
+	{
+
 		//divide by number of echos!
 		GadgetContainerMessage<ISMRMRD::ImageHeader>* h1 = new GadgetContainerMessage<ISMRMRD::ImageHeader>();
 		GadgetContainerMessage<hoNDArray< float > > *outimage;
@@ -143,30 +142,27 @@ int ContrastGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 			outimage = new GadgetContainerMessage< hoNDArray<float> >(phase_sum);*/
 
 		outimage= new GadgetContainerMessage<hoNDArray<float>>(sum_arrays[typeIndex]);
-		
+
 		float* out_ptr = outimage->getObjectPtr()->get_data_ptr();
 		float meanterm=1/(float)numEchos;
-	
-		#pragma omp parallel for	
-		for (int i = 0; i < numPixels; i++)
-			out_ptr[i]*=meanterm;		
-			
-				
 
+		#pragma omp parallel for
+		for (int i = 0; i < numPixels; i++)
+			out_ptr[i]*=meanterm;
 
 		h1->cont(outimage);
 		h1->getObjectPtr()->slice =m1->getObjectPtr()->slice;
 		h1->getObjectPtr()->image_index = m1->getObjectPtr()->image_index+1000;
 		h1->getObjectPtr()->contrast=m1->getObjectPtr()->contrast+1;
-	
+
 		if(meta)
 		{
 			GadgetContainerMessage<ISMRMRD::MetaContainer> *newmeta = new GadgetContainerMessage<ISMRMRD::MetaContainer>();
 			*(newmeta->getObjectPtr()) = *(meta->getObjectPtr());//actually copy instead of clone
 
 			outimage->cont(newmeta);
-		}		
-		
+		}
+
 		if (this->next()->putq(h1) == -1) {
 		m1->release();
 		GERROR("Unable to put phase_sum images on next gadget's queue.\n");
