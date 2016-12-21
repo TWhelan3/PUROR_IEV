@@ -2,6 +2,7 @@
 #define Unwrap3DGadget_H_
 
 #include "PUROR.h"
+#include "hdf5.h"
 namespace Gadgetron{
 
   class EXPORTGADGETSPUROR Unwrap3DGadget:
@@ -20,13 +21,13 @@ public Gadget1<ISMRMRD::ImageHeader>
 	ISMRMRD::Dataset* dsToWrite;
 
 
-	int yres;
-	int xres;
-	int cres;
+	hsize_t yres;
+	hsize_t xres;
+	hsize_t cres;
 	ISMRMRD::Dataset* temp_storage;
-	int num_slices;
-	int num_echos;
-	int num_ch;
+	hsize_t num_slices;
+	hsize_t num_echos;
+	hsize_t num_ch;
 	
 	std::vector<int> ordering;//how would I get this from inputs?
 	std::vector<int> VolumeEnds;

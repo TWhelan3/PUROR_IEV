@@ -30,7 +30,10 @@
 		<name>Unwrap</name>
 		<dll>gadgetron_PUROR</dll>
 		<classname>UnwrapGadget</classname>
-		 <property><name>threads</name><value>6</value></property>
+		<property>
+			<name>threads</name>
+			<value>6</value>
+		</property>
 	</gadget>
 	<!--<gadget>
 		<name>Reorder</name>
@@ -61,11 +64,11 @@
 		<dll>cfmm_gadgets</dll>
 		<classname>AutoScaleEntireImage</classname>
 		<property>
-		<name>numEchos</name>
+			<name>numEchos</name>
 		</property>
 		<property>
-		<name>is_signed</name>
-		<value>true</value>
+			<name>is_signed</name>
+			<value>true</value>
 		</property>
 	</gadget>
 	<gadget>
@@ -79,60 +82,69 @@
 		<classname>AddMetaData</classname>
 	</gadget>
 	<gadget>
+		<name>DICOMSave</name>
+		<dll>cfmm_gadgets</dll>
+		<classname>DicomSave</classname>
+		<property>
+			<name>dicom_dir</name>
+			<value>DicomResults</value>
+		</property>
+	</gadget>
+	<!--<gadget>
 		<name>DICOMSend</name>
 		<dll>cfmm_gadgets</dll>
 		<classname>DicomSend</classname>
 		<property>
-                <name>peerHostName</name>
-                <value>dicom-public.imaging.robarts.ca</value>
-         </property>
-         <property>
-                <name>peerPort</name>
-                <value>11115</value>
-         </property>
-        <property>
-               <name>peerAETitle</name>
-               <value>CFMM-Public</value>
-        </property>
-        <property>
-               <name>callingAETitle</name>
-               <value>GADGETRON</value>
-         </property>
-       	<property>
-            	<name>dcmPrivateKey</name>
-            	<value>/work/twhelan5/PUROR_IEV/key.pem</value>
-        </property>
-        <property>
-           	<name>dcmCertFile</name>
-           	<value>/work/twhelan5/PUROR_IEV/cert.pem</value>
-        </property>
-        <property>
-        	<name>dcmPassphrase</name>
-       		<value>gadgetron_sharcnet_client</value>
-        </property>
- 	<property>
-        	<name>username</name>
-               	<value>twhelan5</value>
-        </property>
-      	<property>
-            	<name>privateKey</name>
-            	<value>/home/twhelan5/.ssh/intercluster</value>
-      	</property>
-     	<property>
-         	<name>localHost</name>
-         	<value>127.0.0.1</value>
-     	 </property>
-      	<property>
-         	<name>localPort</name>
-         	<value>11112</value>
-      	</property>
-     	 <property>
-          	<name>forwardHost</name>
-		<value>10.16.1.38</value>
-      	</property>
-      	<property>
-        	 <name>forwardPort</name>
-         	<value>22</value>
-     	 </property>
-	</gadget>
+			<name>peerHostName</name>
+			<value>dicom-public.imaging.robarts.ca</value>
+		</property>
+		<property>
+			<name>peerPort</name>
+			<value>11115</value>
+		</property>
+		<property>
+			<name>peerAETitle</name>
+			<value>CFMM-Public</value>
+		</property>
+		<property>
+			<name>callingAETitle</name>
+			<value>GADGETRON</value>
+		</property>
+		<property>
+			<name>dcmPrivateKey</name>
+			<value>/work/twhelan5/PUROR_IEV/key.pem</value>
+		</property>
+		<property>
+			<name>dcmCertFile</name>
+			<value>/work/twhelan5/PUROR_IEV/cert.pem</value>
+		</property>
+		<property>
+			<name>dcmPassphrase</name>
+			<value>gadgetron_sharcnet_client</value>
+		</property>
+		<property>
+			<name>username</name>
+			<value>twhelan5</value>
+		</property>
+		<property>
+			<name>privateKey</name>
+			<value>/home/twhelan5/.ssh/intercluster</value>
+		</property>
+		<property>
+			<name>localHost</name>
+			<value>127.0.0.1</value>
+		</property>
+		<property>
+			<name>localPort</name>
+			<value>11112</value>
+		</property>
+		<property>
+		<name>forwardHost</name>
+			<value>10.16.1.38</value>
+		</property>
+		<property>
+			<name>forwardPort</name>
+			<value>22</value>
+		</property>
+	</gadget>-->
 </gadgetronStreamConfiguration>
