@@ -66,10 +66,14 @@ int ContrastGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 		types.push_back(type);
 		sum_arrays.push_back(new hoNDArray<float>());
 
-		try{sum_arrays[typeIndex]->create(numPixels);}
-		catch (std::runtime_error &err){
-		GEXCEPTION(err,"Unable to create mag_sum space.\n");
-		return GADGET_FAIL;
+		try
+		{
+			sum_arrays[typeIndex]->create(numPixels);
+		}
+		catch (std::runtime_error &err)
+		{
+			GEXCEPTION(err,"Unable to create mag_sum space.\n");
+			return GADGET_FAIL;
 		}
 	}
 

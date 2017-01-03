@@ -19,15 +19,11 @@ int FlipGadget::process_config(ACE_Message_Block* mb)
 int FlipGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 {
 	GadgetContainerMessage< hoNDArray< float > >* m2 = AsContainerMessage< hoNDArray< float > > (m1->cont());
-	
-
 
 	if(!m2){
 		GERROR("Float image array expected and not found.\n");
-		
 		return GADGET_FAIL;
 	}
-
 
 	float new_phase_dir[3];
 	float new_read_dir[3];
@@ -43,15 +39,12 @@ int FlipGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 	*cm1->getObjectPtr() = *m1->getObjectPtr();
 	cm1->getObjectPtr()->data_type = ISMRMRD::ISMRMRD_FLOAT;//GADGET_IMAGE_REAL_FLOAT;
 
-		
 	cm1->cont(cm2);
 	cm2->cont(m2->cont());
 	m2->cont(NULL);
-	
 
 	//Want to make read_dir 1/0/0 and phase_dir 0/1/0
 	//Assume we have it
-	
 	if(std::abs(m1->getObjectPtr()->phase_dir[0])>std::abs(m1->getObjectPtr()->read_dir[0]))
 	{
 		swap=true;
@@ -73,7 +66,7 @@ int FlipGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 		for(int d=0; d<3; d++)
 		{
 			new_read_dir[d]=m1->getObjectPtr()->read_dir[d];
-			new_phase_dir[d]=m1->getObjectPtr()->phase_dir[d];	
+			new_phase_dir[d]=m1->getObjectPtr()->phase_dir[d];
 		}
 	}
 

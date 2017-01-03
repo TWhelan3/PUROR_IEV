@@ -4,35 +4,31 @@
 #define GETMASKGADGET_H
 
 #include "PUROR.h"
-
-
 namespace Gadgetron
 {
 
-class EXPORTGADGETSPUROR GetMaskGadget : 
-public Gadget1<ISMRMRD::ImageHeader>
-{
-	enum class MASKFLAG { DEFAULT, THR_PROVIDED, LOAD_BOTH, LOAD_SPPT};
+	class EXPORTGADGETSPUROR GetMaskGadget : 
+	public Gadget1<ISMRMRD::ImageHeader>
+	{
+		enum class MASKFLAG { DEFAULT, THR_PROVIDED, LOAD_BOTH, LOAD_SPPT};
 	
- 	public:
-  	GADGET_DECLARE(GetMaskGadget)
+	 	public:
+	  	GADGET_DECLARE(GetMaskGadget)
 
-  	protected:
+	  	protected:
 
-	virtual int process_config(ACE_Message_Block* mb);
-  	virtual int process( GadgetContainerMessage< ISMRMRD::ImageHeader>* m1);
+		virtual int process_config(ACE_Message_Block* mb);
+	  	virtual int process( GadgetContainerMessage< ISMRMRD::ImageHeader>* m1);
 	
-	GADGET_PROPERTY(maskflag, int, "How to acquire initial masks", 0);//0=default, 1=use thresholds provided, 2=load, 3=load support only
-	GADGET_PROPERTY(threshold, float, "Thresholding for mask", 0);
-	GADGET_PROPERTY(threshold2, float, "Support thresholding for mask", 0);
-	int xres;
-	int yres;
-	int num_ch;
+		GADGET_PROPERTY(maskflag, int, "How to acquire initial masks", 0);//0=default, 1=use thresholds provided, 2=load, 3=load support only
+		GADGET_PROPERTY(threshold, float, "Thresholding for mask", 0);
+		GADGET_PROPERTY(threshold2, float, "Support thresholding for mask", 0);
+		int xres;
+		int yres;
+		int num_ch;
 	
-	void mask_create(int* outputptr, float **filter_mag, float filter_th);
-	float graythresh_more(float** image);
-
-};
-
+		void mask_create(int* outputptr, float **filter_mag, float filter_th);
+		float graythresh_more(float** image);
+	};
 }  
 #endif //GetMASKGADGET_H
