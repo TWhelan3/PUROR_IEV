@@ -13,7 +13,7 @@ namespace Gadgetron
 	public Gadget1<ISMRMRD::ImageHeader>
 	{
 	 	public:
-		GADGET_DECLARE(AddMag)
+		GADGET_DECLARE(AddMag);
 
 		protected:
 		virtual int process_config(ACE_Message_Block* mb);

@@ -13,7 +13,7 @@ namespace Gadgetron
 	public Gadget1<ISMRMRD::ImageHeader>
 	{
 		public:
-		GADGET_DECLARE(FlipGadget)
+		GADGET_DECLARE(FlipGadget);
 
 		protected:
 

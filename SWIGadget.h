@@ -13,7 +13,7 @@ class EXPORTGADGETSPUROR SWIGadget :
 public Gadget1<ISMRMRD::ImageHeader>
 {
  public:
-  GADGET_DECLARE(SWIGadget)
+  GADGET_DECLARE(SWIGadget);
 
     protected:
 

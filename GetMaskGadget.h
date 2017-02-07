@@ -13,7 +13,7 @@ namespace Gadgetron
 		enum class MASKFLAG { DEFAULT, THR_PROVIDED, LOAD_BOTH, LOAD_SPPT};
 	
 	 	public:
-	  	GADGET_DECLARE(GetMaskGadget)
+		GADGET_DECLARE(GetMaskGadget);
 
 	  	protected:
 
