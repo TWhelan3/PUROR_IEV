@@ -50,6 +50,12 @@ int AddMetaData::process(GadgetContainerMessage<DcmFileFormat> * m1)
 		return GADGET_FAIL;
 	}
 
+	if(!meta)
+	{
+		GERROR("No meta data found for DICOM\n");
+		return GADGET_FAIL;
+	}
+
 	unsigned int BUFSIZE = 1024;
         char *buf = new char[BUFSIZE];
 	const char* checkbuf;
@@ -69,39 +75,36 @@ int AddMetaData::process(GadgetContainerMessage<DcmFileFormat> * m1)
 	if(meta->getObjectPtr()->exists("GADGETRON_IMAGE_SCALE_OFFSET") && meta->getObjectPtr()->exists("GADGETRON_IMAGE_SCALE_RATIO"))
 	{
 		rescaleIntercept=meta->getObjectPtr()->as_double(GADGETRON_IMAGE_SCALE_OFFSET);
-		rescaleIntercept=meta->getObjectPtr()->as_double(GADGETRON_IMAGE_SCALE_OFFSET);
+		//rescaleIntercept=meta->getObjectPtr()->as_double(GADGETRON_IMAGE_SCALE_OFFSET);
 	
-
-
-	 // Window Center
-        key.set(0x0028, 0x1050);
-        dataset->remove(key);
-        
-        // Window Width
-        key.set(0x0028, 0x1051);
-        dataset->remove(key);
+		 // Window Center
+		key.set(0x0028, 0x1050);
+		dataset->remove(key);
+		
+		// Window Width
+		key.set(0x0028, 0x1051);
+		dataset->remove(key);
 
 	
 	
 
-	rescaleIntercept = -1.0*rescaleIntercept*rescaleSlope;
+		rescaleIntercept = -1.0*rescaleIntercept*rescaleSlope;
 	
-	rescaleSlope= 1.0/rescaleSlope;
+		rescaleSlope= 1.0/rescaleSlope;
 	
-	key.set(0x0028,0x1052);
-	ACE_OS::snprintf(buf, BUFSIZE, "%f", rescaleIntercept);//
-	WRITE_DCM_STRING(key, buf);
+		key.set(0x0028,0x1052);
+		ACE_OS::snprintf(buf, BUFSIZE, "%f", rescaleIntercept);//
+		write_dcm_string(dataset,key, buf);
 
-	key.set(0x0028,0x1053);
-	ACE_OS::snprintf(buf, BUFSIZE, "%f", rescaleSlope);//meta->getObjectPtr()->as_double("Intercept"));
-	WRITE_DCM_STRING(key, buf);
+		key.set(0x0028,0x1053);
+		ACE_OS::snprintf(buf, BUFSIZE, "%f", rescaleSlope);//meta->getObjectPtr()->as_double("Intercept"));
+		write_dcm_string(dataset,key, buf);
 
 
-	key.set(0x0028, 0x0030);
-        ACE_OS::snprintf(buf, BUFSIZE, "%.6f\\%.6f", pixel_spacing_Y, pixel_spacing_X);
-	WRITE_DCM_STRING(key, buf);
+		key.set(0x0028, 0x0030);
+		ACE_OS::snprintf(buf, BUFSIZE, "%.6f\\%.6f", pixel_spacing_Y, pixel_spacing_X);
+		write_dcm_string(dataset,key, buf);
 	}
-
 
 	key.set(0x0008,0x1030); //Study Description
 	
@@ -109,7 +112,7 @@ int AddMetaData::process(GadgetContainerMessage<DcmFileFormat> * m1)
 	if(checkbuf==NULL || !strcmp(checkbuf, "XXXXXXXX"))
 	{
 		ACE_OS::snprintf(buf, BUFSIZE, "%s", "Gadgetron^IEV");
-		WRITE_DCM_STRING(key, buf);
+		write_dcm_string(dataset,key, buf);
 	}
 
 
@@ -118,13 +121,13 @@ int AddMetaData::process(GadgetContainerMessage<DcmFileFormat> * m1)
 	//{
 		std::string type;
 		
-		if(meta)
+		if(meta->getObjectPtr()->exists("GADGETRON_DATA_ROLE"))
 			type=meta->getObjectPtr()->as_str(GADGETRON_DATA_ROLE);
 		else
-			type="MRI Images";
+			type="MRI_Images";
 	
 		ACE_OS::snprintf(buf, BUFSIZE, "%s", type.c_str());
-		WRITE_DCM_STRING(key, buf);
+		write_dcm_string(dataset,key, buf);
 	//}
 
 	 
@@ -133,7 +136,7 @@ int AddMetaData::process(GadgetContainerMessage<DcmFileFormat> * m1)
 	if(checkbuf==NULL || !strcmp(checkbuf, "XXXXXXXX"))
 	{
 		
-			WRITE_DCM_STRING(key, "1");
+			write_dcm_string(dataset,key, "1");
 		
 		// be sure to use the same one for all series you generate
 	}
@@ -141,11 +144,12 @@ int AddMetaData::process(GadgetContainerMessage<DcmFileFormat> * m1)
 	//Study UID should be created in IEVChannelSumGadget. 
 	key.set(0x0020,0x000D);//Study UID
 	dataset->findAndGetString(key, checkbuf, false);
-	if(checkbuf==NULL || !strcmp(checkbuf, "XXXXXXXX"))
+	if(checkbuf==NULL || !strcmp(checkbuf, "XXXXXXXX")) //X's are put there by DicomFinish
 	{
-		
-			WRITE_DCM_STRING(key, meta->getObjectPtr()->as_str("StudyInstanceUID"));
-		
+		if(meta->getObjectPtr()->exists("StudyInstanceUID"))
+			write_dcm_string(dataset,key, meta->getObjectPtr()->as_str("StudyInstanceUID"));
+			
+		// If there's a better UID in meta, use it	
 		// be sure to use the same one for all series you generate
 	}
 
@@ -155,26 +159,26 @@ int AddMetaData::process(GadgetContainerMessage<DcmFileFormat> * m1)
 	dataset->findAndGetString(key, checkbuf, false);
 	if(checkbuf==NULL || !strcmp(checkbuf, "19000101"))
 	{
-		WRITE_DCM_STRING(key, buf);
+		write_dcm_string(dataset,key, buf);
 	}
 	
 	key.set(0x0008,0x0030);//Study Time
 	dataset->findAndGetString(key, checkbuf, false);
 	if(checkbuf==NULL || !strcmp(checkbuf, "121212"))
 	{
-		WRITE_DCM_STRING(key, buf);
+		write_dcm_string(dataset,key, buf);
 	}
 	
 	key.set(0x0008,0x0021);//Series Date
 	if(!dataset->tagExistsWithValue(key))
 	{
-		WRITE_DCM_STRING(key, buf);
+		write_dcm_string(dataset,key, buf);
 	}
 
 	key.set(0x0008,0x0012);//Instance Creation Date		
 	if(!dataset->tagExistsWithValue(key))
 	{
-		WRITE_DCM_STRING(key, buf);
+		write_dcm_string(dataset,key, buf);
 	}	
 	std::strftime(buf, 100, "%H%M%S", timeinfo);
 
@@ -183,19 +187,19 @@ int AddMetaData::process(GadgetContainerMessage<DcmFileFormat> * m1)
 	key.set(0x0008,0x0031);//Series Time
 	if(!dataset->tagExistsWithValue(key))
 	{
-		WRITE_DCM_STRING(key, buf);
+		write_dcm_string(dataset,key, buf);
 	}	
 
 
 	key.set(0x0008,0x0013);//Instance Creation Time
 	if(!dataset->tagExistsWithValue(key))
 	{
-		WRITE_DCM_STRING(key, buf);
+		write_dcm_string(dataset,key, buf);
 	}	
 
 	key.set(0x0018,0x0081);//Echo Time
 
-	WRITE_DCM_STRING(key, meta->getObjectPtr()->as_str("TE"));
+	write_dcm_string(dataset,key, meta->getObjectPtr()->as_str("TE"));
 
 
 
