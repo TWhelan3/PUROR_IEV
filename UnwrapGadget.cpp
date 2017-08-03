@@ -516,7 +516,8 @@ void UnwrapGadget::shift_to_mean_y(float* phase,MaskData* md)
 		len_u=md->signalY[index_x].size();
 		columnOffset=index_x*yres;
 		signal = md->signalY[index_x];
-		if(len_u>yres/4)//if mask covers more than 1/4 of the column		{
+		if(len_u>yres/4)//if mask covers more than 1/4 of the column
+		{
 			for(ii=0; ii<len_u; ii++)
 				phase_u[ii]=phase[columnOffset+signal[ii]];
 			phi_good=PI/2;
@@ -525,7 +526,8 @@ void UnwrapGadget::shift_to_mean_y(float* phase,MaskData* md)
 			dePULM_1D(phase_u,signal,index_ls);//Reconnect these segments
 			for(ii=0; ii<len_u; ii++)				phase[columnOffset+signal[ii]]=phase_u[ii];
 
-		}		//took out else	}
+		}		//took out else
+	}
 
 	for(index_x=1; index_x<xres; index_x++)
 	{		len_u=		md->signalY[index_x].size();
@@ -555,7 +557,8 @@ void UnwrapGadget::shift_to_mean_y(float* phase,MaskData* md)
 			//bring the average of the row to [-pi,pi]
 			correction=round(mean_connect[index_x]/PI2)*PI2;
 			for(ii=0; ii<len_u; ii++)				phase[columnOffset+signal[ii]]-=correction;
-			//find new average of row			if(len_c<=3)
+			//find new average of row
+			if(len_c<=3)
 			{
 				for(ii=0; ii<len_u; ii++)
 					phase_sample[ii]=phase[columnOffset+signal[ii]];
@@ -617,12 +620,14 @@ void UnwrapGadget::shift_to_mean_y(float* phase,MaskData* md)
 	{
 		mean_unwrap[ii]-=correction;
 	}
-	//shift phase data	for(index_x = 0; index_x<xres; index_x++)
+	//shift phase data
+	for(index_x = 0; index_x<xres; index_x++)
 	{
 		diff_test = mean_unwrap[index_x] - mean_connect[index_x];
 		signal = md->signalY[0];
 		if (fabs(diff_test) > PI)
-		{			correction=PI2*round(diff_test/(PI2));
+		{
+			correction=PI2*round(diff_test/(PI2));
 			for(ii=0; ii<md->signalY[index_x].size(); ii++)
 				phase[index_x*yres+signal[ii]] += correction;
 		}
@@ -753,7 +758,7 @@ void UnwrapGadget::shift_to_mean_y_brain(float* phase,MaskData* md)
 		connect =	md->connectYH[index_x];
 		columnOffset=index_x*yres;
 		//calculate the connect mean
-				//Find mean of each column
+		//Find mean of each column
 		if(len_c<=3)
 		{
 			mean_connect[index_x]=mean(phase+columnOffset, yres);
@@ -767,7 +772,8 @@ void UnwrapGadget::shift_to_mean_y_brain(float* phase,MaskData* md)
 		//bring the average of the row to [-pi,pi]
 		correction=round(mean_connect[index_x]/PI2)*PI2;
 		for(ii=0; ii<yres; ii++)			phase[columnOffset+ii]-=correction;
-		//find new average of row		if(len_c<=3)
+		//find new average of row
+		if(len_c<=3)
 		{
 			mean_connect[index_x]=mean(phase+columnOffset, yres);		}
 		else
@@ -786,7 +792,8 @@ void UnwrapGadget::shift_to_mean_y_brain(float* phase,MaskData* md)
 	{
 		mean_unwrap[ii]-=correction;
 	}
-	//shift phase data	for(index_x = 0; index_x<xres; index_x++)
+	//shift phase data
+	for(index_x = 0; index_x<xres; index_x++)
 	{
 		diff_test = mean_unwrap[index_x] - mean_connect[index_x];
 		if (fabs(diff_test) > PI)
