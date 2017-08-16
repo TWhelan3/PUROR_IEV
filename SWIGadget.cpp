@@ -14,7 +14,7 @@ int SWIGadget::process_config(ACE_Message_Block* mb)
            
       if (boost::filesystem::exists(fname)) {
          try {
-            pDataset = new ISMRMRD::Dataset(fname.c_str(), groupname.value().c_str(), true);
+            pDataset = new ISMRMRD::Dataset(fname.c_str(), groupname.value().c_str(), false);
          }
          catch (...) {
             GDEBUG("Unable to open: %s\n", fname.c_str());
@@ -26,6 +26,11 @@ int SWIGadget::process_config(ACE_Message_Block* mb)
 
 	numEchos=hdr.encoding[0].encodingLimits.contrast().maximum +1;
 	numChan =hdr.acquisitionSystemInformation.get().receiverChannels();
+
+	echoTimes=hdr.sequenceParameters.get().TE.get();//should be doing checks, structures are optional
+
+	for(int e=0;e<numEchos;e++)
+		echoTimes[e]/=1000; //still unclear if TEs are stored in seconds or milliseconds, but latter seems more common
 
 return GADGET_OK;
 }
@@ -40,13 +45,31 @@ int SWIGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 	GadgetContainerMessage< hoNDArray< float > >* m2 = AsContainerMessage< hoNDArray< float > > (m1->cont());
 	
 	if(!m2){
-		GERROR("Complex image array expected and not found.\n");
+		GERROR("Phase expected and not found.\n");
 		
 		return GADGET_FAIL;
 	}
 
+	GadgetContainerMessage<ISMRMRD::MetaContainer> *meta = AsContainerMessage<ISMRMRD::MetaContainer>(m2->cont());
+	//For now assume things have to have meta for this to work
+	//Can generalize later
+	std::string data_role = meta->getObjectPtr()->as_str(GADGETRON_DATA_ROLE);
+	
+	if(std::strcmp(data_role.c_str(), GADGETRON_IMAGE_FREQMAP)) //If this is not a frequency map pass it on
+	{	//GADGETRON_IMAGE_FREQMAP is a macro for "FREQMAP". 
+
+		if (this->next()->putq(m1) < 0) { //pass to next gadget
+			GERROR("Failed to pass on magnitude\n");
+			m1->release();
+		   return GADGET_FAIL;
+		}
+		return GADGET_OK;
+	}
+
 	yres = m2->getObjectPtr()->get_size(0);
 	xres = m2->getObjectPtr()->get_size(1);
+	int thisEcho = m1->getObjectPtr()->contrast;
+	float thisTE = echoTimes[thisEcho];
 	
 
 	int c;
@@ -54,16 +77,18 @@ int SWIGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 
 	GadgetContainerMessage<ISMRMRD::ImageHeader>* cm1 = new GadgetContainerMessage<ISMRMRD::ImageHeader>();
 	GadgetContainerMessage<hoNDArray< float > > *cm2 = new GadgetContainerMessage<hoNDArray< float > >();
-
+	hoNDArray<float> phase_mask;
 
 	*cm1->getObjectPtr() = *m1->getObjectPtr();
 	cm1->getObjectPtr()->data_type = ISMRMRD::ISMRMRD_FLOAT;//GADGET_IMAGE_REAL_FLOAT;
 	
 	cm1->cont(cm2);
 
-	int index =(m1->getObjectPtr()->image_index)*(numEchos)+1;
+	//int index =(m1->getObjectPtr()->image_index)*(numEchos)+1;
+	//int index = m1->getObjectPtr()->image_index; //already decremented
+	static int index = 0;
 	       try {
-            pDataset->readImage(varname.value(), index, image);
+            pDataset->readImage(varname.value(), index++, image);
          }
          catch (std::exception &ex) {
             GERROR("Error reading image %d from %s: %s\n",index, varname.value().c_str(), ex.what());
@@ -79,16 +104,34 @@ int SWIGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 		return GADGET_FAIL;
 	}
 	
+	try{phase_mask.create(yres, xres);}
+	catch (std::runtime_error &err){
+		GEXCEPTION(err,"Unable to allocate array in SWI Gadget.\n");
+		return GADGET_FAIL;
+	}
+
+
 	std::complex<float>* src = image.getDataPtr();
-	float*  pm = m2->getObjectPtr()->get_data_ptr();
+	float*  phase_ptr = m2->getObjectPtr()->get_data_ptr();
 	float*  dst = cm2->getObjectPtr()->get_data_ptr();
+
+	for (int i = 0; i < xres*yres; i++)
+	{
+		phase_mask[i]=0;
+		if(phase_ptr[i]*thisTE>0)
+			phase_mask[i]=1;
+		else
+			phase_mask[i]=(phase_ptr[i]*thisTE+PI)/PI; //frequency already has *2PI component
+
+		if(phase_mask[i]<0)
+			phase_mask[i]=0;
+	}
 
 	for (int i = 0; i < xres*yres; i++) 
 		dst[i]=abs(src[i]);
 	//#pragma omp parallel for private(c)
 	for(c = 1; c<numChan; c++)
 	{
-		
 		int ch_offset= xres*yres*c;
 
 		for (int i = 0; i < xres*yres; i++) 
@@ -96,21 +139,25 @@ int SWIGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 		dst[i] += abs(src[i+ch_offset]);
 		}
 	}
-	for(int t=0; t<timetimes.value(); t++)
-	{
+
 	for (int i = 0; i < xres*yres; i++) 
-		dst[i]*=pm[i];
-	}
+		dst[i]*=std::pow(phase_mask[i],4);
+	
 	cm1->getObjectPtr()->channels=1;
 	cm1->getObjectPtr()->image_type=ISMRMRD::ISMRMRD_IMTYPE_MAGNITUDE;
 	
-	 if (this->next()->putq(cm1) < 0) { //pass to next gadget
+	if (this->next()->putq(cm1) < 0) { //pass to next gadget
 		GERROR("Failed to pass on magnitude\n");
 		cm1->release();
 	   return GADGET_FAIL;
 	}
-	m2->cont(NULL);//necessary so keep meta etc
-	m1->release(); 
+	if (this->next()->putq(m1) < 0) { //pass to next gadget
+		GERROR("Failed to pass on magnitude\n");
+		m1->release();
+	   return GADGET_FAIL;
+	}
+	//m2->cont(NULL);//necessary to keep meta etc
+	//m1->release(); 
 	return GADGET_OK;
 	
 }

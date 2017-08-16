@@ -31,7 +31,7 @@ public Gadget1<ISMRMRD::ImageHeader>
 
 	int numEchos;
 	int numChan;
-
+	std::vector<float> echoTimes;
 	ISMRMRD::Dataset *pDataset;
 };
 
