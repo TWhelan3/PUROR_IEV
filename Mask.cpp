@@ -44,11 +44,11 @@ void  MaskData::iniMask()
 					if(signalX[ii][jj+1]-signalX[ii][jj]==1)//if next point is also in mask:
 					{
 						if(end_flag==0)//if the identified segment is <=3 points long add one to the length
-							kk++;	
+							kk++;
 						if(kk==3)//if the identified segment is 4 pixels long (three connections)
 						{
 							segX[ii].push_back(jj-2); //save the beginning point
-							end_flag=1;	
+							end_flag=1;
 							kk=0;	//reset the length counter
 						}
 						if(jj==(signalX[ii].size()-2) && end_flag==1)//end of mask reached for this row, segment ends here if it's long enough
@@ -69,7 +69,7 @@ void  MaskData::iniMask()
 					}
 				}
 			}
-		}			
+		}
 	}
 	for(ii=0; ii<yres;ii++)
 	{
@@ -77,13 +77,13 @@ void  MaskData::iniMask()
 		{
 			for(jj=0; jj<xres; jj++)
 				sum_tmp[jj]=support_MASK[(ii-1)+yres*jj] + support_MASK[ii+yres*jj] + support_MASK[(ii+1)+yres*jj];
-			
-			for(jj=1; jj<xres-1; jj++)	
+
+			for(jj=1; jj<xres-1; jj++)
 			{
 				if(sum_tmp[jj]==3 && ((support_MASK[ii+yres*(jj-1)] + support_MASK[ii+yres*(jj+1)])==2))//identify support_MASK points with points on four sides
 					connectXH[ii].push_back(jj);//move index up and assign
 			}
-			if(connectXH[ii].size()<=xres/4-1)//if not enough are indentified, use centers of 1x3 segments 
+			if(connectXH[ii].size()<=xres/4-1)//if not enough are indentified, use centers of 1x3 segments
 			{
 				//connectXH.clear();
 				for(jj=1; jj<xres; jj++)
@@ -102,12 +102,12 @@ void  MaskData::iniMask()
 			else//ii==yres-1
 				for(jj=0; jj<xres; jj++)
 					sum_tmp[jj]=support_MASK[(ii-1)+yres*jj] + support_MASK[ii+yres*jj];
-			for(jj=1; jj<xres-1; jj++)	
+			for(jj=1; jj<xres-1; jj++)
 			{
 				if(sum_tmp[jj]==2 && ((support_MASK[ii+yres*(jj-1)] + support_MASK[ii+yres*(jj+1)])==2))//identify mask points with points on three sides (on edge)
 					connectXH[ii].push_back(jj);
 			}
-			if(connectXH[ii].size()<=xres/4-1)//if not enough are indentified, use centers of 1x2 segments 
+			if(connectXH[ii].size()<=xres/4-1)//if not enough are indentified, use centers of 1x2 segments
 			{
 				//connectXH.clear();
 				for(jj=1; jj<xres; jj++)
@@ -116,7 +116,7 @@ void  MaskData::iniMask()
 						connectXH[ii].push_back(jj);
 				}
 			}
-		}	
+		}
 	}
 	return;
 }
@@ -138,7 +138,7 @@ void MaskData::iniMask_y()
 			{
 				if(MASK[jj+yres*ii])//transfer list of points to signal array
 					signalY[ii].push_back(jj);
-			}		
+			}
 
 			if(signalY[ii].size()>6)
 			{
@@ -181,7 +181,7 @@ void MaskData::iniMask_y()
 		{
 			for(jj=0; jj<yres; jj++)
 				sum_tmp[jj]=support_MASK[jj+(ii-1)*yres]+support_MASK[jj+(ii*yres)]+support_MASK[jj+(ii+1)*yres];
-			for(jj=1; jj<yres-1; jj++)	
+			for(jj=1; jj<yres-1; jj++)
 			{
 				if(sum_tmp[jj]==3 && ((support_MASK[(jj-1)+ii*yres]+support_MASK[(jj+1)+ii*yres])==2))//identify mask points with points on four sides
 					connectYH[ii].push_back(jj);//move index up and assign
@@ -205,12 +205,12 @@ void MaskData::iniMask_y()
 				for(jj=0; jj<yres; jj++)
 					sum_tmp[jj]=support_MASK[jj+(ii-1)*yres]+support_MASK[jj+ii*yres];
 
-			for(jj=1; jj<yres-1; jj++)	
+			for(jj=1; jj<yres-1; jj++)
 			{
 				if(sum_tmp[jj]==2 && ((support_MASK[(jj-1)+ii*yres]+support_MASK[(jj+1)+ii*yres])==2))//identify mask points with points on three sides (on edge)
 					connectYH[ii].push_back(jj);
 			}
-			if(connectYH.size()<=yres/4-1)//if not enough are indentified, use centers of 2x1 segments 
+			if(connectYH.size()<=yres/4-1)//if not enough are indentified, use centers of 2x1 segments
 			{
 				//connectYH.clear();
 				for(jj=1; jj<yres; jj++)
@@ -219,7 +219,7 @@ void MaskData::iniMask_y()
 						connectYH[ii].push_back(jj);
 				}
 			}
-		}	
+		}
 
 	}
 return;
