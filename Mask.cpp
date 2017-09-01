@@ -66,6 +66,7 @@ void  MaskData::iniMask()
 							segX[ii].push_back(jj); //save the end point
 							end_flag=0;
 						}
+						kk=0;
 					}
 				}
 			}
@@ -85,7 +86,7 @@ void  MaskData::iniMask()
 			}
 			if(connectXH[ii].size()<=xres/4-1)//if not enough are indentified, use centers of 1x3 segments
 			{
-				//connectXH.clear();
+				connectXH[ii].clear();
 				for(jj=1; jj<xres; jj++)
 				{
 					if(sum_tmp[jj]==3)
@@ -109,7 +110,7 @@ void  MaskData::iniMask()
 			}
 			if(connectXH[ii].size()<=xres/4-1)//if not enough are indentified, use centers of 1x2 segments
 			{
-				//connectXH.clear();
+				connectXH[ii].clear();
 				for(jj=1; jj<xres; jj++)
 				{
 					if(sum_tmp[jj]==2)
@@ -170,6 +171,7 @@ void MaskData::iniMask_y()
 							segY[ii].push_back(jj);//save end point
 							end_flag=0;
 						}
+						kk=0;
 					}
 				}
 			}
@@ -188,7 +190,7 @@ void MaskData::iniMask_y()
 			}
 			if(connectYH.size()<=yres/4-1)//if not enough found, use centers of 3x1 segments
 			{
-				//connectYH.clear();
+				connectYH[ii].clear();
 				for(jj=1; jj<yres; jj++)
 				{
 					if(sum_tmp[jj]==3)
@@ -212,7 +214,7 @@ void MaskData::iniMask_y()
 			}
 			if(connectYH.size()<=yres/4-1)//if not enough are indentified, use centers of 2x1 segments
 			{
-				//connectYH.clear();
+				connectYH[ii].clear();
 				for(jj=1; jj<yres; jj++)
 				{
 					if(sum_tmp[jj]==2)

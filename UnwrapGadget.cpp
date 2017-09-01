@@ -624,7 +624,6 @@ void UnwrapGadget::shift_to_mean_y(float* phase,MaskData* md)
 	for(index_x = 0; index_x<xres; index_x++)
 	{
 		diff_test = mean_unwrap[index_x] - mean_connect[index_x];
-		signal = md->signalY[0];
 		if (fabs(diff_test) > PI)
 		{
 			correction=PI2*round(diff_test/(PI2));
@@ -822,7 +821,6 @@ void UnwrapGadget::calc_quality_y(float* phase_x, int *mask, std::vector<float> 
 		{
 			for(ii=0;ii<xres; ii++)//find spots in t_mask which has a point above and below to check quality
 			{
-				//if(t_mask[(row_index+1)*xres+ii] && t_mask[(row_index-1)*xres+ii] && t_mask[row_index*xres+ii])
 				if(mask[row_index+1+yres*ii] && mask[row_index-1+yres*ii] && mask[row_index+yres*ii])
 					pointsToUse.push_back(ii);
 			}
@@ -871,6 +869,7 @@ void UnwrapGadget::calc_quality_y(float* phase_x, int *mask, std::vector<float> 
 		}
 		if(row_index==(yres-1))//special case
 		{
+			len_up=0;
 			for(ii=0;ii<xres; ii++)
 			{
 				if(mask[row_index-1+yres*ii] && mask[row_index+yres*ii])
@@ -991,19 +990,17 @@ void UnwrapGadget::calc_quality_x(float* phase_y, int *mask, std::vector<float> 
 				if(mask[(col_index-1)*yres+ii] && mask[col_index*yres+ii])
 					pointsToUse.push_back(ii);
 			}
+
 			for(ii=0; ii<pointsToUse.size(); ii++)
 			{
-				for(ii=0; ii<pointsToUse.size(); ii++)
-				{
 				if(fabs(phase_y[pointsToUse[ii]+yres*col_index] - phase_y[pointsToUse[ii]+yres*(col_index-1)])>PI)
 				len_up++;
-				}
-
-				if(!pointsToUse.empty())
-					quality_x[col_index]=((float)pointsToUse.size()-len_up)/(pointsToUse.size());
-				else
-					quality_x[col_index]=-1;
 			}
+
+			if(!pointsToUse.empty())
+				quality_x[col_index]=((float)pointsToUse.size()-len_up)/(pointsToUse.size());
+			else
+				quality_x[col_index]=-1;
 		}
 		pointsToUse.clear();
 
