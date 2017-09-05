@@ -17,8 +17,12 @@ int DecImageIndex::process_config(ACE_Message_Block* mb)
 
 int DecImageIndex::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 {
+	if(m1->getObjectPtr()->image_index==0)
+		GERROR("Image index is already 0!\n");
 
 	m1->getObjectPtr()->image_index=m1->getObjectPtr()->image_index-1;
+
+
 
 	if(-1==this->next()->putq(m1))
 	{
