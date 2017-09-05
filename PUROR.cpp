@@ -303,8 +303,8 @@ std::vector<int>  dePULM_1D_ls(std::vector<float> &phase_1D,float phi_good, std:
 
 	if (phase_1D.empty())
 	{
-		index_ls[0]=0;
-		index_ls[1]=-1;//added -1, probably never gets called but that would have been a bug
+		index_ls.push_back(0);
+		index_ls.push_back(-1);//added -1, probably never gets called but that would have been a bug
 	}
 	if(g_seg.size()>=2)
 	{
