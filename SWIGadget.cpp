@@ -7,7 +7,7 @@ using namespace Gadgetron;
 
 int SWIGadget::process_config(ACE_Message_Block* mb)
 {
-	boost::filesystem::path fname(filename.value());
+	boost::filesystem::path fname(magnitudefilename.value());
 
 	if (!boost::filesystem::exists(fname))
 	{
