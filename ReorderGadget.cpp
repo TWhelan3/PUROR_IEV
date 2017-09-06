@@ -52,11 +52,7 @@ int ReorderGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 
 	ISMRMRD::Image<float> image;
 	ISMRMRD::ImageHeader *header=m1->getObjectPtr();
-	int fullsignal =0;
-	float tmp_mean=0;
-	int ch, e;
 
-	int cres = header->channels;
 	float *unwrapped_x = m2->getObjectPtr()->get_data_ptr();
 
 	float* im_ptr;
@@ -85,7 +81,6 @@ int ReorderGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 		std::chrono::high_resolution_clock::time_point t1;
 		std::chrono::high_resolution_clock::time_point t2;
 		int duration;
-		float* im_pointer, *data_ptr;
 
 		t1 = std::chrono::high_resolution_clock::now();
 
@@ -115,13 +110,8 @@ int ReorderGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 				
 				data->getObjectPtr()->create(header->matrix_size[0], header->matrix_size[1],header->matrix_size[2], header->channels);
 								
-				data_ptr=data->getObjectPtr()->get_data_ptr();
-				
-				im_pointer=image.getDataPtr();
-
 				memcpy(data->getObjectPtr()->get_data_ptr(), image.getDataPtr(), image.getDataSize());
 				std::string attributes2;
-
 
 				image.getAttributeString(attributes2);
 				 if (header->attribute_string_len > 0 && !attributes2.empty()) {

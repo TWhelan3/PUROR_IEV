@@ -81,7 +81,6 @@ int IEVChannelSumGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* 
 	GadgetContainerMessage<hoNDArray< float > > *filtered_unwrapped_msg_ptr =   AsContainerMessage<hoNDArray<float>>(unfiltered_unwrapped_msg_ptr->cont());
 	GadgetContainerMessage<ISMRMRD::MetaContainer> *meta;
 	
-	static int c=0;	
 	int e;
 	int echo = m1->getObjectPtr()->contrast;
 	float inv_echo_time;
@@ -149,9 +148,6 @@ int IEVChannelSumGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* 
 			#pragma omp parallel for private(ch)
 			for(ch = 0; ch < num_ch; ch++)
 			{	
-				float* temp_array;
-		
-			
 				channel_weights[ch]=&weights[ch*xres*yres];
 				medianFilter(channel_weights[ch], xres, yres);
 				for (int i = 0; i < xres*yres; i++)

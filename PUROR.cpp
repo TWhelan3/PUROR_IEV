@@ -108,7 +108,7 @@ void unwrap(float* phase, int length)
 void dePULM_1D(std::vector<float> &phase_1D, std::vector<int>& signal,std::vector<int>& index_ls)
 {
 	//This function reconnects segments identified by dePULM_1D_ls
-	float test, inder_diff_l, diff_1D;
+	float test, diff_1D;
 	float inter_diff_l;
 	int ii, kk, length, tmp_1D;
 	int k;
@@ -203,7 +203,7 @@ void dePULM_1D(std::vector<float> &phase_1D, std::vector<int>& signal,std::vecto
 void dePULM_1D_brain(std::vector<float> &phase_1D, std::vector<int>& index_ls)
 {
 	//This function reconnects segments identified by dePULM_1D_ls
-	float test, inder_diff_l, diff_1D;
+	float test, diff_1D;
 	float inter_diff_l;
 	int ii, kk, length, tmp_1D;
 	int k;
@@ -296,7 +296,7 @@ void dePULM_1D_brain(std::vector<float> &phase_1D, std::vector<int>& index_ls)
 std::vector<int>  dePULM_1D_ls(std::vector<float> &phase_1D,float phi_good, std::vector<int>& g_seg)
 {
 	//This function identifies segments (within mask segments) in phase_1D with phase gradient < phi_good
-	int ii,jj,kk, end_flag,count;
+	int ii,jj,kk, end_flag;
 	float diff_nb;
 	std::vector<int> index_ls;
 
@@ -353,7 +353,7 @@ std::vector<int>  dePULM_1D_ls(std::vector<float> &phase_1D,float phi_good, std:
 std::vector<int>   dePULM_1D_ls_brain(std::vector<float> &phase_1D, float phi_good)
 {
 	//This function identifies segmentsin phase_1D with phase gradient < phi_good
-	int ii,jj,kk, end_flag;
+	int jj,kk, end_flag;
 	float diff_nb;
 	std::vector<int> index_ls;
 

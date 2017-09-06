@@ -63,7 +63,6 @@ int HPFGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 
 	int cres = header->channels;
 	float *pixel = unfiltered_phase_msg->getObjectPtr()->get_data_ptr();
-	float* im_ptr;
 
 	GadgetContainerMessage<hoNDArray< float > > *filtered_phase_msg;
 	boost::shared_ptr< std::vector<size_t> > dims; 

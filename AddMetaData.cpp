@@ -66,8 +66,6 @@ int AddMetaData::process(GadgetContainerMessage<DcmFileFormat> * m1)
 	float rescaleIntercept;//=	meta->getObjectPtr()->as_double(GADGETRON_IMAGE_SCALE_OFFSET);
 	float rescaleSlope;//=	meta->getObjectPtr()->as_double(GADGETRON_IMAGE_SCALE_RATIO);
 
-
-	static bool studyUIDmade=false;
 	std::time_t rawtime;
 	std::time(&rawtime);
 	std::tm *timeinfo = std::localtime(&rawtime);

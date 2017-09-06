@@ -112,7 +112,7 @@ int AddMag::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 	}
 
 	std::complex<float>* src = image.getDataPtr();
-	float* pm = m2->getObjectPtr()->get_data_ptr();
+
 	float* dst = cm2->getObjectPtr()->get_data_ptr();
 
 	for (int i = 0; i < xres*yres; i++) 

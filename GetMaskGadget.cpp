@@ -70,7 +70,7 @@ int GetMaskGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 		float thr;
 		int ch_offset= xres*yres*ch;
 		float** filter_mag;
-		int sum=0;
+
 		int *ch_sppt_mask=supportmasks->getObjectPtr()->get_data_ptr()+ch_offset;
 		int *ch_mask;
 		if(maskProcedure<2)//not loading mask
@@ -109,7 +109,7 @@ int GetMaskGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 	}
 	//build message block chain to pass on
 	m2->cont(supportmasks);
-	if(maskProcedure==int(MASKFLAG::DEFAULT) || threshold2.value()==0)
+	if(maskProcedure==int(MASKFLAG::DEFAULT) || threshold2.value()<=0)
 	{
 		*(supportmasks->getObjectPtr()->get_data_ptr())-=2;
 		if(meta)
@@ -238,14 +238,12 @@ float GetMaskGadget::graythresh_more(float** image)
 {
 	int ii,jj, numpix, max_index;
 	float realmax=0;
-	float maxmag=0;
 	float maxsbs=0;
 	int bins[256];
 	float p[256];
 	float omega[256];
 	float mu[256];
 	float sbs[256];
-	int count=0;
 	float thr1;
 	for(ii=0;ii<256;ii++)
 	{
@@ -286,7 +284,7 @@ float GetMaskGadget::graythresh_more(float** image)
 
 	for(ii=0; ii<255;ii++)//only to 254 to avoid divide by 0 (omega[255]=1)
 	{
-		if(omega[ii]!=0 && omega[ii] != 1)
+		if(omega[ii] > 0 && omega[ii] < 1)//(omega[ii]!=0 && omega[ii] != 1)
 		sbs[ii]=(mu[255]*omega[ii]-mu[ii])*(mu[255]*omega[ii]-mu[ii])/(omega[ii]*(1-omega[ii]));
 	}
 	maxsbs=0;
