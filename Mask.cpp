@@ -1,36 +1,54 @@
 #include "Mask.h"
-#include <iostream>
 MaskData::MaskData(){}
-MaskData::~MaskData()
-{
-		delete[] MASK;
-		delete[] support_MASK;
-		delete[] support_MASK_trans;
-}
+
 MaskData::MaskData(int yres, int xres)
 {
-
 	this->yres=yres;
 	this->xres=xres;
-	MASK = new int[yres*xres];
-	support_MASK = new int[yres*xres];
-	support_MASK_trans = new int[yres*xres];
+	MASK.resize(xres*yres);
+	support_MASK.resize(xres*yres);
+	support_MASK_trans.resize(xres*yres);
 	signalX.resize(yres);
 	connectXH.resize(yres);
 	segX.resize(yres);
-	fullsignal=0;
+	fullsignal=false;
 	signalY.resize(xres);
 	connectYH.resize(xres);
 	segY.resize(xres);
 }
-void  MaskData::iniMask()
+void MaskData::fillMask()
+{
+	MASK.assign(xres*yres,1);
+	support_MASK=MASK;
+	support_MASK_trans=support_MASK;
+	fullsignal = true;
+}
+void MaskData::iniMask()
 {
 	int end_flag,ii,jj,kk;
 	std::vector<int> sum_tmp(xres);
-	if(!fullsignal)
+
+	//Clears in this function are to handle calling initialization more than once (shouldn't happen but does)
+
+	if(fullsignal)//
 	{
 		for(ii=0; ii<yres;ii++)
 		{
+			signalX[ii].clear();
+			signalX[ii].reserve(xres);
+			for(jj=0; jj<xres;jj++)
+				signalX[ii].push_back(jj);
+			segX[ii].clear();
+			segX[ii].push_back(0);
+			segX[ii].push_back(xres-1);
+		}
+	}
+	else
+	{
+		for(ii=0; ii<yres;ii++)
+		{
+			signalX[ii].clear();
+			segX[ii].clear();
 			for(jj=0; jj<xres;jj++)
 			{
 				if(MASK[ii+yres*jj])//transfer list of points to signal array
@@ -74,6 +92,7 @@ void  MaskData::iniMask()
 	}
 	for(ii=0; ii<yres;ii++)
 	{
+		connectXH[ii].clear();
 		if(ii!=0 && ii!=yres-1)
 		{
 			for(jj=0; jj<xres; jj++)
@@ -130,11 +149,28 @@ void MaskData::iniMask_y()
 			support_MASK_trans[jj*xres+ii]=support_MASK[jj+yres*ii];
 
 	std::vector<int> sum_tmp(yres);
-	if(!fullsignal)
+
+	if(fullsignal)
+	{
+		for(ii=0; ii<xres;ii++)
+		{
+			signalY[ii].clear();
+			segY[ii].clear();
+			signalY[ii].reserve(yres);
+			for(jj=0; jj<yres;jj++)
+				signalY[ii].push_back(jj);
+
+			segY[ii].push_back(0);
+			segY[ii].push_back(yres-1);
+		}
+	}
+	else
 	{
 
 		for(ii=0; ii<xres;ii++)
 		{
+			signalY[ii].clear();
+			segY[ii].clear();
 			for(jj=0; jj<yres;jj++)
 			{
 				if(MASK[jj+yres*ii])//transfer list of points to signal array
@@ -144,7 +180,7 @@ void MaskData::iniMask_y()
 			if(signalY[ii].size()>6)
 			{
 				kk=0; end_flag=0;
-				for(jj=0; jj<signalY[ii].size()-1; jj++)//identify start and end poiints of line segmetns in columns
+				for(jj=0; jj<signalY[ii].size()-1; jj++)//identify start and end poiints of line segments in columns
 				{
 					if(signalY[ii][jj+1]-signalY[ii][jj]==1)//if next point also in mask
 					{
@@ -179,6 +215,7 @@ void MaskData::iniMask_y()
 	}
 	for(ii=0; ii<xres;ii++)
 	{
+		connectYH[ii].clear();
 		if(ii!=0 && ii!=xres-1)
 		{
 			for(jj=0; jj<yres; jj++)
@@ -226,4 +263,3 @@ void MaskData::iniMask_y()
 	}
 return;
 }
-
