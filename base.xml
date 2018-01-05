@@ -54,11 +54,11 @@
 		<dll>gadgetron_PUROR</dll>
 		<classname>IEVChannelSumGadget</classname>
 	</gadget>
-<!--	<gadget>
+	<gadget><!--The MRT study scans need to be flipped -->
 		<name>Flip</name>
 		<dll>gadgetron_PUROR</dll>
 		<classname>FlipGadget</classname>
-	</gadget>-->
+	</gadget>
 	<gadget>
 		<name>AutoScaleEntireImage</name>
 		<dll>cfmm_gadgets</dll>
