@@ -77,7 +77,7 @@ int FlipGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 		}
 	}
 
-	if(new_read_dir[0]<=0)
+	if(new_read_dir[0]<0)//changed from <= Jun 28 2017
 	{
 		read_flip=true;
 		for(d=0; d<3; d++)
@@ -94,7 +94,7 @@ int FlipGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 		}
 	}
 
-	if(new_phase_dir[1]<=0)
+	if(new_phase_dir[1]<0)//changed from <= Jun 28 2017
 	{
 		phase_flip=true;
 		for(d=0; d<3; d++)
@@ -142,7 +142,7 @@ int FlipGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 				dst[j*xres+i] = src[i*yres+j];
 		}
 	}
-	if(!swap && read_flip && !phase_flip)
+	else if(!swap && read_flip && !phase_flip)
 	{
 		for (int i = 0; i < yres; i++) 
 		{
@@ -150,6 +150,13 @@ int FlipGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1)
 				dst[i*xres+j] = src[i*xres+xres-j-1];
 		}
 	}
+	else //added catchall to make sure copy happens if swap or flip criteria are not met
+	{
+		for (int ij=0; ij<xres*yres; ij++)
+			dst[ij]=src[ij];
+	}
+
+
 
 	//Acquisition Matrix might be screwed up but DicomFinishGadget might also screw it up
 
